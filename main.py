@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 
 from dotenv import load_dotenv
-from research_agent.agent import ResearchAgent
-from research_agent.config import Config
+from agent.research_agent.agent import ResearchAgent
+from agent.research_agent.config import Config
 
 # Load environment variables from .env file
 load_dotenv()
 
 def main():
     """Main function to run the Research Agent"""
-    print("=== Research Agent ===")
-    print("This agent will analyze product queries using Google Search and AWS Bedrock LLMs")
+    print("=== Real-Time Research Agent ===")
+    print("This agent analyzes queries using real-time news data and AWS Bedrock LLMs")
     print()
     
     # Validate configuration
     if not Config.validate_config():
         print("\nPlease set the required environment variables:")
-        print("- GOOGLE_CSE_ID: Your Google Custom Search Engine ID")
-        print("- AWS credentials should be configured (AWS CLI, IAM role, or environment variables)")
+        print("- NEWSDATA_API_KEY: Your NewsData.io API key")
+        print("- AWS credentials should be configured")
+        print("\nGet NewsData API key from: https://newsdata.io/")
         return
     
     # Initialize the research agent
     try:
         agent = ResearchAgent(
-            google_cse_id=Config.get_google_cse_id(),
+            newsdata_api_key=Config.get_newsdata_api_key(),
             aws_access_key=Config.get_aws_access_key(),
             aws_secret_key=Config.get_aws_secret_key(),
             aws_region=Config.get_aws_region()
@@ -38,7 +39,7 @@ def main():
     while True:
         try:
             print("-" * 50)
-            user_input = input("Enter your product query (or 'quit' to exit): ").strip()
+            user_input = input("Enter your product/market query (or 'quit' to exit): ").strip()
             
             if user_input.lower() in ['quit', 'exit', 'q']:
                 print("Goodbye!")
