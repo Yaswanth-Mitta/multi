@@ -4,9 +4,19 @@ import requests
 from typing import Dict, List, Any
 
 class ResearchAgent:
-    def __init__(self, google_cse_id: str, aws_region: str = 'us-east-1'):
+    def __init__(self, google_cse_id: str, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
         self.google_cse_id = google_cse_id
-        self.bedrock_client = boto3.client('bedrock-runtime', region_name=aws_region)
+        
+        # Configure boto3 client with credentials if provided
+        if aws_access_key and aws_secret_key:
+            self.bedrock_client = boto3.client(
+                'bedrock-runtime',
+                aws_access_key_id=aws_access_key,
+                aws_secret_access_key=aws_secret_key,
+                region_name=aws_region
+            )
+        else:
+            self.bedrock_client = boto3.client('bedrock-runtime', region_name=aws_region)
         
     def search_google(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         """Simulate search results for the query"""

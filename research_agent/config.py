@@ -17,6 +17,14 @@ class Config:
         return os.getenv('AWS_REGION', 'us-east-1')
     
     @staticmethod
+    def get_aws_access_key() -> Optional[str]:
+        return os.getenv('AWS_ACCESS_KEY_ID')
+    
+    @staticmethod
+    def get_aws_secret_key() -> Optional[str]:
+        return os.getenv('AWS_SECRET_ACCESS_KEY')
+    
+    @staticmethod
     def validate_config() -> bool:
         """Validate that all required configuration is present"""
         google_cse_id = Config.get_google_cse_id()

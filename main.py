@@ -20,6 +20,8 @@ def main():
     try:
         agent = ResearchAgent(
             google_cse_id=Config.get_google_cse_id(),
+            aws_access_key=Config.get_aws_access_key(),
+            aws_secret_key=Config.get_aws_secret_key(),
             aws_region=Config.get_aws_region()
         )
         print("Research Agent initialized successfully!")
