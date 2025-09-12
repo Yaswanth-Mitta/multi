@@ -16,17 +16,13 @@ def main():
     # Validate configuration
     if not Config.validate_config():
         print("\nPlease set the required environment variables:")
-        print("- GOOGLE_API_KEY: Your Google Custom Search API key")
         print("- GOOGLE_CSE_ID: Your Google Custom Search Engine ID")
         print("- AWS credentials should be configured (AWS CLI, IAM role, or environment variables)")
-        print("\nGet Google API key from: https://console.cloud.google.com/")
-        print("Enable Custom Search API and create credentials")
         return
     
     # Initialize the research agent
     try:
         agent = ResearchAgent(
-            google_api_key=Config.get_google_api_key(),
             google_cse_id=Config.get_google_cse_id(),
             aws_access_key=Config.get_aws_access_key(),
             aws_secret_key=Config.get_aws_secret_key(),
