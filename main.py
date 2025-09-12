@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from dotenv import load_dotenv
-from agent.research_agent.agent import ResearchAgent
+from agent.research_agent.orchestrator import AIOrchestrator
 from agent.research_agent.config import Config
 
 # Load environment variables from .env file
@@ -9,30 +9,35 @@ load_dotenv()
 
 def main():
     """Main function to run the Research Agent"""
-    print("=== Real-Time Research Agent ===")
-    print("This agent analyzes queries using real-time news data and AWS Bedrock LLMs")
+    print("=== AI Research Orchestrator ===")
+    print("Intelligent agent that routes queries to appropriate services:")
+    print("📰 Stocks/News → Real-time NewsData.io API")
+    print("🛍️  Products → Google Search + Market Analysis")
+    print("🤖 All powered by AWS Bedrock LLMs")
     print()
     
     # Validate configuration
     if not Config.validate_config():
         print("\nPlease set the required environment variables:")
         print("- NEWSDATA_API_KEY: Your NewsData.io API key")
+        print("- GOOGLE_CSE_ID: Your Google Custom Search Engine ID")
         print("- AWS credentials should be configured")
         print("\nGet NewsData API key from: https://newsdata.io/")
         return
     
-    # Initialize the research agent
+    # Initialize the AI orchestrator
     try:
-        agent = ResearchAgent(
+        orchestrator = AIOrchestrator(
             newsdata_api_key=Config.get_newsdata_api_key(),
+            google_cse_id=Config.get_google_cse_id(),
             aws_access_key=Config.get_aws_access_key(),
             aws_secret_key=Config.get_aws_secret_key(),
             aws_region=Config.get_aws_region()
         )
-        print("Research Agent initialized successfully!")
+        print("AI Orchestrator initialized successfully!")
         print()
     except Exception as e:
-        print(f"Error initializing Research Agent: {e}")
+        print(f"Error initializing AI Orchestrator: {e}")
         return
     
     # Main interaction loop
@@ -51,7 +56,7 @@ def main():
             
             print()
             # Process the query
-            result = agent.analyze_query(user_input)
+            result = orchestrator.analyze_query(user_input)
             print()
             print(result)
             print()
