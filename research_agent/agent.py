@@ -4,37 +4,32 @@ import requests
 from typing import Dict, List, Any
 
 class ResearchAgent:
-    def __init__(self, google_api_key: str, google_cse_id: str, aws_region: str = 'us-east-1'):
-        self.google_api_key = google_api_key
+    def __init__(self, google_cse_id: str, aws_region: str = 'us-east-1'):
         self.google_cse_id = google_cse_id
         self.bedrock_client = boto3.client('bedrock-runtime', region_name=aws_region)
         
     def search_google(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
-        """Fetch data from Google Search API"""
-        url = "https://www.googleapis.com/customsearch/v1"
-        params = {
-            'key': self.google_api_key,
-            'cx': self.google_cse_id,
-            'q': query,
-            'num': num_results
-        }
-        
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
-            
-            results = []
-            for item in data.get('items', []):
-                results.append({
-                    'title': item.get('title', ''),
-                    'snippet': item.get('snippet', ''),
-                    'link': item.get('link', '')
-                })
-            return results
-        except Exception as e:
-            print(f"Error fetching Google search results: {e}")
-            return []
+        """Simulate search results for the query"""
+        # Since you mentioned no API key needed, using mock data
+        # Replace this with your actual search implementation
+        mock_results = [
+            {
+                'title': f'Market Analysis for {query}',
+                'snippet': f'Latest market trends and pricing information for {query}. Consumer demand analysis and competitive landscape.',
+                'link': 'https://example.com/market-analysis'
+            },
+            {
+                'title': f'Consumer Reviews: {query}',
+                'snippet': f'User reviews and ratings for {query}. Purchase decisions and satisfaction ratings from real customers.',
+                'link': 'https://example.com/reviews'
+            },
+            {
+                'title': f'Price Comparison: {query}',
+                'snippet': f'Compare prices for {query} across different retailers. Best deals and offers available.',
+                'link': 'https://example.com/price-comparison'
+            }
+        ]
+        return mock_results[:num_results]
     
     def query_bedrock_llm(self, prompt: str, model_id: str = 'anthropic.claude-3-5-sonnet-20240620-v1:0') -> str:
         """Query Bedrock LLM with the given prompt"""

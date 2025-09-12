@@ -19,12 +19,7 @@ class Config:
     @staticmethod
     def validate_config() -> bool:
         """Validate that all required configuration is present"""
-        google_api_key = Config.get_google_api_key()
         google_cse_id = Config.get_google_cse_id()
-        
-        if not google_api_key:
-            print("Error: GOOGLE_API_KEY environment variable not set")
-            return False
         
         if not google_cse_id:
             print("Error: GOOGLE_CSE_ID environment variable not set")
