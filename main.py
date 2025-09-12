@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
+from dotenv import load_dotenv
 from research_agent.agent import ResearchAgent
 from research_agent.config import Config
+
+# Load environment variables from .env file
+load_dotenv()
 
 def main():
     """Main function to run the Research Agent"""
