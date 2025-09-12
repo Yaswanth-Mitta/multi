@@ -24,7 +24,10 @@ class AIOrchestrator:
         """
         
         classification = self.llm_service.query_llm(classification_prompt).strip().upper()
-        print(f"Query classified as: {classification}")
+        print(f"\n=== CLASSIFICATION ===")
+        print(f"Query: {query}")
+        print(f"Classified as: {classification}")
+        print(f"=== END CLASSIFICATION ===")
         return classification
     
     def create_optimized_prompt(self, query: str, category: str) -> str:
@@ -65,6 +68,15 @@ class AIOrchestrator:
             f"Title: {article['title']}\nDescription: {article['description']}\nSource: {article['source_id']}\nDate: {article['pubDate']}\n"
             for article in news_results[:3]
         ])
+        
+        print(f"\n=== NEWS DATA RETRIEVED ===")
+        for i, article in enumerate(news_results[:3], 1):
+            print(f"\nArticle {i}:")
+            print(f"Title: {article['title']}")
+            print(f"Description: {article['description'][:200]}...")
+            print(f"Source: {article['source_id']}")
+            print(f"Date: {article['pubDate']}")
+        print(f"\n=== END NEWS DATA ===")
         
         analysis_prompt = f"""
         Based on real-time news data about "{query}", provide analysis:
@@ -109,6 +121,14 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
             f"Title: {result['title']}\nSnippet: {result['snippet']}\n"
             for result in search_results
         ])
+        
+        print(f"\n=== SEARCH DATA RETRIEVED ===")
+        for i, result in enumerate(search_results, 1):
+            print(f"\nResult {i}:")
+            print(f"Title: {result['title']}")
+            print(f"Snippet: {result['snippet'][:150]}...")
+            print(f"Link: {result['link']}")
+        print(f"\n=== END SEARCH DATA ===")
         
         market_analysis_prompt = f"""
         Based on product search data for "{query}":
