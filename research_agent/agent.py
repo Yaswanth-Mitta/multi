@@ -1,8 +1,7 @@
 import json
 import boto3
 import requests
-from bs4 import BeautifulSoup
-import urllib.parse
+from tavily import TavilyClient
 from typing import Dict, List, Any
 
 class ResearchAgent:
