@@ -35,7 +35,7 @@ class AIOrchestrator:
         if not classification or classification not in ["STOCKS", "NEWS", "PRODUCT", "GENERAL"]:
             # Simple keyword-based fallback
             query_lower = query.lower()
-            if any(word in query_lower for word in ["mobile", "phone", "laptop", "product", "buy", "price", "camera", "display", "snapdragon"]):
+            if any(word in query_lower for word in ["mobile", "phone", "laptop", "product", "buy", "price", "camera", "display", "snapdragon", "review", "iphone", "samsung", "unboxing"]):
                 classification = "PRODUCT"
             elif any(word in query_lower for word in ["stock", "market", "trading", "investment", "share", "apple", "tesla", "microsoft", "google", "amazon", "reliance", "tcs", "infosys", "aapl", "tsla", "msft"]):
                 classification = "STOCKS"
