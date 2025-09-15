@@ -68,15 +68,22 @@ class AIOrchestrator:
         try:
             # Step 1: Classify the query
             category = self.classify_query(user_query)
+            print(f"🏭 Getting agent for category: {category}")
             
             # Step 2: Get appropriate agent from factory
             agent = self.factory.get_agent(category)
+            print(f"🤖 Got agent: {type(agent).__name__}")
             
             # Step 3: Process query with agent
             context = {'category': category}
-            return agent.process(user_query, context)
+            print(f"📤 Calling agent.process with context: {context}")
+            result = agent.process(user_query, context)
+            print(f"📥 Agent returned result length: {len(result)}")
+            return result
             
         except Exception as e:
             print(f"Error in orchestration: {e}")
+            import traceback
+            traceback.print_exc()
             return f"Error processing query: {str(e)}"
     
