@@ -181,9 +181,8 @@ class ScraperService:
         if len(text) > 0 and (non_ascii_count / len(text)) > 0.3:
             return True
         
-        # Check for common garbled patterns
-        garbled_patterns = ['�', '\x', '\u']
-        return any(pattern in text for pattern in garbled_patterns)
+        # Check for replacement character
+        return '\ufffd' in text
     
     def _is_navigation_text(self, text: str) -> bool:
         """Check if text appears to be navigation or UI elements"""
