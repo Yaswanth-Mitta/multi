@@ -30,23 +30,27 @@ class ProductAgent(Agent):
             print(f"Link: {result['link']}")
         print(f"\n=== END SEARCH DATA ===")
         
-        # Always get YouTube reviews for product queries
-        print("\nSearching YouTube for reviews (10 videos)...")
-        youtube_reviews = self.youtube.search_reviews(query, max_results=10)
-        
-        # Extract content from all 10 YouTube videos
-        print("\nExtracting content from 10 YouTube videos...")
-        for i, video in enumerate(youtube_reviews[:10]):  # Process all 10 videos
-            print(f"Processing video {i+1}/10: {video['title'][:60]}...")
-            content = self.youtube.get_video_transcript(video['url'])
-            video['transcript'] = content
-            print(f"Content extracted {i+1}: {len(content)} characters")
+        # Only get YouTube reviews for specific product review queries
+        youtube_reviews = []
+        if 'review' in query.lower() or 'unboxing' in query.lower() or 'vs' in query.lower():
+            print("\nSearching YouTube for reviews (10 videos)...")
+            youtube_reviews = self.youtube.search_reviews(query, max_results=10)
             
-            # Add small delay to avoid overwhelming requests
-            if i < 9:  # Don't delay after last video
-                time.sleep(0.5)
+            # Extract content from all 10 YouTube videos
+            print("\nExtracting content from 10 YouTube videos...")
+            for i, video in enumerate(youtube_reviews[:10]):  # Process all 10 videos
+                print(f"Processing video {i+1}/10: {video['title'][:60]}...")
+                content = self.youtube.get_video_transcript(video['url'])
+                video['transcript'] = content
+                print(f"Content extracted {i+1}: {len(content)} characters")
+                
+                # Add small delay to avoid overwhelming requests
+                if i < 9:  # Don't delay after last video
+                    time.sleep(0.5)
+        else:
+            print("\nSkipping YouTube search (not a review query)")
         
-        # Reddit scraping removed
+        # No Reddit scraping
         reddit_posts = []
         
         # Scrape actual content from URLs
