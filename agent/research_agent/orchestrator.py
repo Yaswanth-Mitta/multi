@@ -30,6 +30,20 @@ class AIOrchestrator:
         """
         
         classification = self.llm_service.query_llm(classification_prompt).strip().upper()
+        
+        # Fallback if LLM fails or returns empty
+        if not classification or classification not in ["STOCKS", "NEWS", "PRODUCT", "GENERAL"]:
+            # Simple keyword-based fallback
+            query_lower = query.lower()
+            if any(word in query_lower for word in ["mobile", "phone", "laptop", "product", "buy", "price", "camera", "display"]):
+                classification = "PRODUCT"
+            elif any(word in query_lower for word in ["stock", "market", "trading", "investment"]):
+                classification = "STOCKS"
+            elif any(word in query_lower for word in ["news", "breaking", "latest"]):
+                classification = "NEWS"
+            else:
+                classification = "GENERAL"
+        
         print(f"\n=== CLASSIFICATION ===")
         print(f"Query: {query}")
         print(f"Classified as: {classification}")
