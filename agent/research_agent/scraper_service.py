@@ -182,13 +182,14 @@ class ScraperService:
             return True
         
         # Check for common garbled patterns
-        garbled_patterns = ['\ufffd', '\x', '\u', '؛', '֎', '␦', '߿', '͝']
+        garbled_patterns = ['�', '\x', '\u']
         return any(pattern in text for pattern in garbled_patterns)
     
     def _is_navigation_text(self, text: str) -> bool:
         """Check if text appears to be navigation or UI elements"""
         nav_keywords = ['menu', 'navigation', 'skip to', 'search', 'login', 'sign in', 
-                       'cart', 'checkout', 'home', 'about us', 'contact', 'privacy']
+                       'cart', 'checkout', 'home', 'about us', 'contact', 'privacy',
+                       'subscribe', 'newsletter', 'follow us', 'social media']
         text_lower = text.lower()
         return any(keyword in text_lower for keyword in nav_keywords) and len(text) < 100
     
@@ -216,11 +217,15 @@ class ScraperService:
         # Remove extra whitespace
         text = re.sub(r'\s+', ' ', text)
         
-        # Remove special characters that might cause issues
-        text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\xff]', '', text)
+        # Remove control characters
+        text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
         
         # Remove repeated punctuation
         text = re.sub(r'[.]{3,}', '...', text)
         text = re.sub(r'[-]{3,}', '---', text)
+        
+        # Remove HTML entities
+        text = text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+        text = text.replace('&quot;', '"').replace('&#39;', "'")
         
         return text.strip()

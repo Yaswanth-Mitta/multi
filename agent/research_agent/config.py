@@ -23,10 +23,6 @@ class Config:
         return os.getenv('NEWSDATA_API_KEY')
     
     @staticmethod
-    def get_google_cse_id() -> Optional[str]:
-        return os.getenv('GOOGLE_CSE_ID')
-    
-    @staticmethod
     def validate_config() -> bool:
         """Validate that all required configuration is present"""
         newsdata_key = Config.get_newsdata_api_key()
