@@ -2,14 +2,14 @@ import requests
 import urllib.parse
 import os
 from typing import Dict, List, Any
-from .selenium_service import SeleniumService
+from .enhanced_search_service import EnhancedSearchService
 
 class SearchService:
     def __init__(self, google_cse_id: str):
         self.google_cse_id = google_cse_id
         self.google_api_key = os.getenv('GOOGLE_API_KEY')
         self.base_url = "https://www.googleapis.com/customsearch/v1"
-        self.selenium = SeleniumService()
+        self.enhanced_search = EnhancedSearchService()
     
     def search_products(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         """Search for product information using Google Custom Search"""
@@ -17,14 +17,14 @@ class SearchService:
             print(f"Searching products for: {query}")
             
             if not self.google_api_key:
-                print("Google API key not found, using Selenium search")
-                selenium_results = self.selenium.search_google(f"{query} specifications reviews price", num_results)
+                print("Google API key not found, using enhanced multi-source search")
+                search_results = self.enhanced_search.search_multiple_sources(query, num_results)
                 
                 # Also get official website results
-                official_results = self.selenium.search_official_websites(query)
+                official_results = self.enhanced_search.search_official_websites(query)
                 
                 # Combine results
-                all_results = selenium_results + official_results
+                all_results = search_results + official_results
                 return all_results[:num_results]
             
             params = {
@@ -50,9 +50,9 @@ class SearchService:
             return results
             
         except Exception as e:
-            print(f"Error in Google search: {e}, falling back to Selenium")
-            selenium_results = self.selenium.search_google(f"{query} specifications reviews price", num_results)
-            return selenium_results if selenium_results else self._get_fallback_results(query)
+            print(f"Error in Google search: {e}, falling back to enhanced search")
+            search_results = self.enhanced_search.search_multiple_sources(query, num_results)
+            return search_results if search_results else self._get_fallback_results(query)
     
     def _get_fallback_results(self, query: str) -> List[Dict[str, Any]]:
         """Fallback search results when all methods fail"""
@@ -80,6 +80,5 @@ class SearchService:
         ]
     
     def close(self):
-        """Close Selenium driver"""
-        if hasattr(self.selenium, 'close'):
-            self.selenium.close()
+        """Close search service"""
+        pass  # No browser to close
