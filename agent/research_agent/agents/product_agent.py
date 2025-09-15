@@ -5,6 +5,7 @@ from ..llm_service import LLMService
 from ..scraper_service import ScraperService
 from ..youtube_service import YouTubeService
 from ..reddit_service import RedditService
+from ..langchain_service import LangChainService
 
 class ProductAgent(Agent):
     def __init__(self, search_service: SearchService, llm_service: LLMService):
@@ -13,6 +14,7 @@ class ProductAgent(Agent):
         self.scraper = ScraperService()
         self.youtube = YouTubeService()
         self.reddit = RedditService()
+        self.langchain = LangChainService()
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
         # Get product search data
@@ -29,16 +31,20 @@ class ProductAgent(Agent):
             print(f"Link: {result['link']}")
         print(f"\n=== END SEARCH DATA ===")
         
-        # Get YouTube reviews
-        print("\nSearching YouTube for reviews...")
-        youtube_reviews = self.youtube.search_reviews(query)
-        
-        # Extract transcripts from YouTube videos
-        print("\nExtracting YouTube transcripts...")
-        for i, video in enumerate(youtube_reviews[:2]):  # Limit to first 2 videos
-            transcript = self.youtube.get_video_transcript(video['url'])
-            video['transcript'] = transcript
-            print(f"Transcript {i+1}: {len(transcript)} characters")
+        # Get YouTube reviews only for review queries
+        youtube_reviews = []
+        if 'review' in query.lower():
+            print("\nSearching YouTube for reviews...")
+            youtube_reviews = self.youtube.search_reviews(query)
+            
+            # Extract transcripts from YouTube videos
+            print("\nExtracting YouTube transcripts...")
+            for i, video in enumerate(youtube_reviews[:2]):  # Limit to first 2 videos
+                transcript = self.youtube.get_video_transcript(video['url'])
+                video['transcript'] = transcript
+                print(f"Transcript {i+1}: {len(transcript)} characters")
+        else:
+            print("\nSkipping YouTube search (not a review query)")
         
         # Get Reddit discussions
         print("\nSearching Reddit for discussions...")
@@ -58,70 +64,58 @@ class ProductAgent(Agent):
             print(f"Scraping Success: {data['scraped']}")
         print(f"\n=== END SCRAPED CONTENT ===")
         
-        # Combine all sources
-        enhanced_context = "\n=== SEARCH RESULTS & SCRAPED CONTENT ===\n"
-        for i, result in enumerate(search_results):
-            enhanced_context += f"Source {i+1}:\n"
-            enhanced_context += f"Title: {result['title']}\n"
-            enhanced_context += f"Snippet: {result['snippet']}\n"
-            enhanced_context += f"URL: {result['link']}\n"
-            
-            # Add scraped content if available
-            if i < len(scraped_data) and scraped_data[i]['scraped']:
-                enhanced_context += f"Scraped Content: {scraped_data[i]['content'][:500]}\n"
-            else:
-                enhanced_context += "Scraped Content: Not available\n"
-            enhanced_context += "\n"
-        
-        enhanced_context += "\n=== YOUTUBE REVIEWS & TRANSCRIPTS ===\n"
-        for i, video in enumerate(youtube_reviews, 1):
-            enhanced_context += f"{i}. 📺 {video['title']}\n"
-            enhanced_context += f"   Views: {video['views']}\n"
-            enhanced_context += f"   URL: {video['url']}\n"
-            
-            # Add transcript if available
-            if 'transcript' in video and video['transcript']:
-                enhanced_context += f"   Transcript: {video['transcript'][:500]}...\n"
-            else:
-                enhanced_context += "   Transcript: Not available\n"
-            enhanced_context += "\n"
-        
-        enhanced_context += "\n=== REDDIT DISCUSSIONS ===\n"
-        for i, post in enumerate(reddit_posts, 1):
-            enhanced_context += f"{i}. 💬 {post['title']}\n"
-            enhanced_context += f"   Subreddit: {post['subreddit']}\n"
-            enhanced_context += f"   URL: {post['url']}\n\n"
-        
-        search_context = enhanced_context
+        # Use LangChain to process and structure all data
+        print("\nProcessing data with LangChain...")
+        search_context = self.langchain.create_comprehensive_context(
+            search_results, scraped_data, youtube_reviews, reddit_posts
+        )
         
         market_analysis_prompt = f"""
-        Based on comprehensive product data for "{query}":
+        You are a product analyst reviewing "{query}" based on REAL DATA from multiple sources.
         
+        IMPORTANT: The data below is from actual websites, YouTube videos, and user discussions. 
+        Treat this as legitimate, current information about the product.
+        
+        DATA SOURCES:
         {search_context}
         
-        Provide detailed product analysis:
-        1. Product Overview & Key Features
-        2. User Reviews & Feedback Summary
-        3. Pros and Cons Analysis
-        4. Pricing & Value Assessment
-        5. Comparison with Competitors
-        6. Purchase Recommendation
+        ANALYSIS REQUIRED:
+        1. Product Overview & Key Features (from scraped data)
+        2. User Reviews & Feedback Summary (from YouTube transcripts and discussions)
+        3. Pros and Cons Analysis (based on actual user experiences)
+        4. Pricing & Value Assessment (from review sites)
+        5. Comparison with Competitors (mentioned in reviews)
+        6. Purchase Recommendation (based on all data)
         
-        Use the YouTube reviews and Reddit discussions to provide authentic user perspectives.
+        INSTRUCTIONS:
+        - Use the provided data as factual information
+        - Quote specific points from the scraped content
+        - Reference YouTube reviewer opinions when available
+        - Provide a data-driven analysis, not speculation
         """
         
         purchase_prompt = f"""
-        Based on the comprehensive data including YouTube reviews and Reddit discussions for "{query}":
+        You are providing a purchase recommendation for "{query}" based on REAL REVIEW DATA.
         
-        Provide purchase decision analysis:
-        1. Overall Rating (1-10)
-        2. Best Use Cases
-        3. Who Should Buy This
-        4. Who Should Avoid This
-        5. Best Alternatives
-        6. Final Verdict
+        The following data is from actual product reviews, YouTube videos, and user discussions:
         
-        Consider real user experiences from YouTube and Reddit in your analysis.
+        COMPREHENSIVE REVIEW DATA:
+        {search_context}\n\nNote: This data includes actual scraped content from review websites, YouTube transcripts, and user discussions.
+        
+        PURCHASE ANALYSIS REQUIRED:
+        1. Overall Rating (1-10) - based on reviewer consensus
+        2. Best Use Cases - from actual user experiences
+        3. Who Should Buy This - target audience from reviews
+        4. Who Should Avoid This - common complaints/issues
+        5. Best Alternatives - mentioned in comparative reviews
+        6. Final Verdict - data-driven recommendation
+        
+        INSTRUCTIONS:
+        - Base your analysis ONLY on the provided review data
+        - Quote specific reviewer opinions and experiences
+        - Reference price points and value assessments from reviews
+        - Provide concrete recommendations based on actual user feedback
+        - Do NOT question the existence of the product - analyze the provided data
         """
         
         market_analysis = self.llm_service.query_llm(market_analysis_prompt)
