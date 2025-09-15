@@ -6,6 +6,7 @@ from ..scraper_service import ScraperService
 from ..youtube_service import YouTubeService
 from ..reddit_service import RedditService
 from ..langchain_service import LangChainService
+import time
 
 class ProductAgent(Agent):
     def __init__(self, search_service: SearchService, llm_service: LLMService):
@@ -34,15 +35,20 @@ class ProductAgent(Agent):
         # Get YouTube reviews only for review queries
         youtube_reviews = []
         if 'review' in query.lower():
-            print("\nSearching YouTube for reviews...")
-            youtube_reviews = self.youtube.search_reviews(query)
+            print("\nSearching YouTube for reviews (10 videos)...")
+            youtube_reviews = self.youtube.search_reviews(query, max_results=10)
             
             # Extract transcripts from YouTube videos
-            print("\nExtracting YouTube transcripts...")
-            for i, video in enumerate(youtube_reviews[:2]):  # Limit to first 2 videos
+            print("\nExtracting YouTube transcripts from 10 videos...")
+            for i, video in enumerate(youtube_reviews[:10]):  # Process all 10 videos
+                print(f"Processing video {i+1}/10: {video['title'][:50]}...")
                 transcript = self.youtube.get_video_transcript(video['url'])
                 video['transcript'] = transcript
                 print(f"Transcript {i+1}: {len(transcript)} characters")
+                
+                # Add delay to avoid rate limiting
+                if i < 9:  # Don't delay after last video
+                    time.sleep(1)
         else:
             print("\nSkipping YouTube search (not a review query)")
         
