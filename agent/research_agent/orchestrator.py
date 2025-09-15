@@ -77,7 +77,13 @@ class AIOrchestrator:
         try:
             # Check if this is a follow-up question to existing research
             if self.memory.has_active_session() and not self._is_new_research_query(user_query):
+                print(f"🔄 Detected follow-up question about {self.memory.current_session['product']}")
                 return self._handle_followup_query(user_query)
+            
+            # Clear memory if starting new research
+            if self.memory.has_active_session():
+                print(f"🔄 Starting new research, clearing previous session")
+                self.memory.clear_session()
             
             # Step 1: Classify the query for new research
             category = self.classify_query(user_query)
@@ -103,15 +109,29 @@ class AIOrchestrator:
     
     def _is_new_research_query(self, query: str) -> bool:
         """Determine if this is a new research query or follow-up"""
-        new_research_keywords = ['review', 'analysis', 'compare', 'vs', 'price of', 'specs of']
         query_lower = query.lower()
         
-        # If query contains product names different from current session
+        # Keywords that clearly indicate follow-up questions
+        followup_keywords = ['camera', 'battery', 'price', 'color', 'colors', 'screen', 'display', 
+                           'performance', 'storage', 'memory', 'size', 'weight', 'features',
+                           'what', 'how', 'when', 'where', 'why', 'is it', 'does it', 'can it',
+                           'details', 'detail', 'about', 'specs', 'specification']
+        
+        # If it's clearly a follow-up question
+        if any(keyword in query_lower for keyword in followup_keywords):
+            return False
+        
+        # Keywords that indicate new research
+        new_research_keywords = ['review of', 'analysis of', 'compare with']
+        
+        # If query contains completely different product names
         if self.memory.current_session:
             current_product = self.memory.current_session['product'].lower()
-            if not any(word in query_lower for word in current_product.split()):
+            different_products = ['iphone', 'samsung', 'oneplus', 'xiaomi', 'huawei', 'sony', 'lg']
+            if any(product in query_lower for product in different_products) and not any(word in current_product for word in query_lower.split()):
                 return True
         
+        # If it contains explicit new research keywords
         return any(keyword in query_lower for keyword in new_research_keywords)
     
     def _handle_followup_query(self, query: str) -> str:
