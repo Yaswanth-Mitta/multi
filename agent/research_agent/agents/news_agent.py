@@ -77,14 +77,26 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
             if data:
                 company_names.append(data['name'])
                 stock_data_context += f"""
-Stock: {data['name']} ({data['symbol']})
-Current Price: ${data['current_price']}
-Change: ${data['change']} ({data['change_percent']:.2f}%)
-Day Range: ${data['day_low']} - ${data['day_high']}
-Volume: {data['volume']:,}
-Market Cap: ${data['market_cap']:,}
-P/E Ratio: {data['pe_ratio']}
-52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
+📊 {data['name']} ({data['symbol']})
+
+💰 CURRENT TRADING:
+   Current Price: ${data['current_price']}
+   Change: ${data['change']} ({data['change_percent']:+.2f}%)
+   Today's Open: ${data['today_open']}
+   Today's Range: ${data['today_low']} - ${data['today_high']}
+   Volume: {data['today_volume']:,}
+
+📈 YESTERDAY'S DATA:
+   Open: ${data['yesterday_open']}
+   Close: ${data['yesterday_close']}
+   Range: ${data['yesterday_low']} - ${data['yesterday_high']}
+   Volume: {data['yesterday_volume']:,}
+
+📋 KEY METRICS:
+   Market Cap: ${data['market_cap']:,}
+   P/E Ratio: {data['pe_ratio']}
+   52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
+
 """
         
         # Step 3: Get market summary

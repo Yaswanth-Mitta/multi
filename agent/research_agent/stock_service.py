@@ -16,8 +16,24 @@ class StockService:
             if hist.empty:
                 return None
             
+            # Current day data
             current_price = hist['Close'].iloc[-1]
-            prev_close = info.get('previousClose', hist['Close'].iloc[-2] if len(hist) > 1 else current_price)
+            today_open = hist['Open'].iloc[-1]
+            today_high = hist['High'].iloc[-1]
+            today_low = hist['Low'].iloc[-1]
+            today_volume = hist['Volume'].iloc[-1]
+            
+            # Yesterday's data (if available)
+            if len(hist) > 1:
+                yesterday_open = hist['Open'].iloc[-2]
+                yesterday_close = hist['Close'].iloc[-2]
+                yesterday_high = hist['High'].iloc[-2]
+                yesterday_low = hist['Low'].iloc[-2]
+                yesterday_volume = hist['Volume'].iloc[-2]
+            else:
+                yesterday_open = yesterday_close = yesterday_high = yesterday_low = yesterday_volume = 'N/A'
+            
+            prev_close = info.get('previousClose', yesterday_close if yesterday_close != 'N/A' else current_price)
             change = current_price - prev_close
             change_percent = (change / prev_close) * 100 if prev_close else 0
             
@@ -25,14 +41,20 @@ class StockService:
                 'symbol': symbol.upper(),
                 'name': info.get('longName', symbol),
                 'current_price': round(current_price, 2),
+                'today_open': round(today_open, 2),
+                'today_high': round(today_high, 2),
+                'today_low': round(today_low, 2),
+                'today_volume': int(today_volume),
+                'yesterday_open': round(yesterday_open, 2) if yesterday_open != 'N/A' else 'N/A',
+                'yesterday_close': round(yesterday_close, 2) if yesterday_close != 'N/A' else 'N/A',
+                'yesterday_high': round(yesterday_high, 2) if yesterday_high != 'N/A' else 'N/A',
+                'yesterday_low': round(yesterday_low, 2) if yesterday_low != 'N/A' else 'N/A',
+                'yesterday_volume': int(yesterday_volume) if yesterday_volume != 'N/A' else 'N/A',
                 'previous_close': round(prev_close, 2),
                 'change': round(change, 2),
                 'change_percent': round(change_percent, 2),
-                'volume': info.get('volume', 0),
                 'market_cap': info.get('marketCap', 0),
                 'pe_ratio': info.get('trailingPE', 'N/A'),
-                'day_high': round(hist['High'].iloc[-1], 2),
-                'day_low': round(hist['Low'].iloc[-1], 2),
                 '52_week_high': info.get('fiftyTwoWeekHigh', 'N/A'),
                 '52_week_low': info.get('fiftyTwoWeekLow', 'N/A')
             }
