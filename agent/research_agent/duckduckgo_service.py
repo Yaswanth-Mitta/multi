@@ -39,7 +39,6 @@ class DuckDuckGoService:
                     # Fix DuckDuckGo redirect URLs
                     if link.startswith('/l/?uddg='):
                         # Extract actual URL from DuckDuckGo redirect
-                        import urllib.parse
                         parsed = urllib.parse.parse_qs(link.split('?', 1)[1])
                         if 'uddg' in parsed:
                             link = urllib.parse.unquote(parsed['uddg'][0])
