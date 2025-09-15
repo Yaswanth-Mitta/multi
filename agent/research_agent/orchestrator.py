@@ -3,6 +3,7 @@ from .factory import AgentFactory
 from .news_service import NewsService
 from .search_service import SearchService
 from .llm_service import LLMService
+from .memory_service import MemoryService
 
 class AIOrchestrator:
     def __init__(self, newsdata_api_key: str, google_cse_id: str, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
@@ -14,6 +15,7 @@ class AIOrchestrator:
         # Initialize factory with services
         self.factory = AgentFactory(news_service, search_service, llm_service)
         self.llm_service = llm_service
+        self.memory = MemoryService()
     
     def classify_query(self, query: str) -> str:
         """Classify query type using LLM"""
@@ -61,12 +63,23 @@ class AIOrchestrator:
         else:
             return query
     
+    def get_memory_status(self) -> str:
+        """Get current memory status"""
+        if self.memory.has_active_session():
+            session = self.memory.get_session_info()
+            return f"Active session: {session['product']} ({len(self.memory.conversation_history)} exchanges)"
+        return "No active session"
+    
     def analyze_query(self, user_query: str) -> str:
-        """Main orchestration method"""
+        """Main orchestration method with conversational memory"""
         print(f"Processing query: {user_query}")
         
         try:
-            # Step 1: Classify the query
+            # Check if this is a follow-up question to existing research
+            if self.memory.has_active_session() and not self._is_new_research_query(user_query):
+                return self._handle_followup_query(user_query)
+            
+            # Step 1: Classify the query for new research
             category = self.classify_query(user_query)
             print(f"🏭 Getting agent for category: {category}")
             
@@ -74,11 +87,12 @@ class AIOrchestrator:
             agent = self.factory.get_agent(category)
             print(f"🤖 Got agent: {type(agent).__name__}")
             
-            # Step 3: Process query with agent
-            context = {'category': category}
+            # Step 3: Process query with agent (full research)
+            context = {'category': category, 'memory': self.memory}
             print(f"📤 Calling agent.process with context: {context}")
             result = agent.process(user_query, context)
             print(f"📥 Agent returned result length: {len(result)}")
+            
             return result
             
         except Exception as e:
@@ -86,4 +100,57 @@ class AIOrchestrator:
             import traceback
             traceback.print_exc()
             return f"Error processing query: {str(e)}"
+    
+    def _is_new_research_query(self, query: str) -> bool:
+        """Determine if this is a new research query or follow-up"""
+        new_research_keywords = ['review', 'analysis', 'compare', 'vs', 'price of', 'specs of']
+        query_lower = query.lower()
+        
+        # If query contains product names different from current session
+        if self.memory.current_session:
+            current_product = self.memory.current_session['product'].lower()
+            if not any(word in query_lower for word in current_product.split()):
+                return True
+        
+        return any(keyword in query_lower for keyword in new_research_keywords)
+    
+    def _handle_followup_query(self, query: str) -> str:
+        """Handle follow-up questions using cached research data"""
+        print(f"💬 Conversational Mode: Answering follow-up about {self.memory.current_session['product']}")
+        
+        # Get research context from memory
+        research_context = self.memory.get_research_context()
+        
+        # Create focused prompt for follow-up
+        followup_prompt = f"""
+        You are answering a follow-up question about {self.memory.current_session['product']} using previously researched data.
+        
+        QUESTION: {query}
+        
+        RESEARCH DATA:
+        {research_context}
+        
+        INSTRUCTIONS:
+        - Answer the specific question using the research data
+        - Be concise and direct
+        - Reference specific details from the research when relevant
+        - If the question can't be answered from the data, say so
+        """
+        
+        response = self.llm_service.query_llm(followup_prompt)
+        
+        # Add to conversation history
+        self.memory.add_conversation(query, response)
+        
+        return f"""
+💬 FOLLOW-UP RESPONSE ({self.memory.current_session['product']})
+
+{response}
+
+💡 Ask more questions about this product, or type 'exit' to start fresh research.
+        """.strip()
+    
+    def clear_memory(self):
+        """Clear conversation memory"""
+        self.memory.clear_session()
     

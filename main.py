@@ -47,11 +47,23 @@ def main():
     while True:
         try:
             print("-" * 50)
-            user_input = input("Enter your product/market query (or 'quit' to exit): ").strip()
             
-            if user_input.lower() in ['quit', 'exit', 'q']:
+            # Show memory status
+            memory_status = orchestrator.get_memory_status()
+            if "Active session" in memory_status:
+                print(f"💭 {memory_status}")
+                user_input = input("Ask follow-up question or 'exit' to start fresh: ").strip()
+            else:
+                user_input = input("Enter your product/market query (or 'quit' to exit): ").strip()
+            
+            if user_input.lower() in ['quit', 'q']:
                 print("Goodbye!")
                 break
+            
+            if user_input.lower() == 'exit':
+                orchestrator.clear_memory()
+                print("🔄 Memory cleared. Starting fresh research.")
+                continue
             
             if not user_input:
                 print("Please enter a valid query.")

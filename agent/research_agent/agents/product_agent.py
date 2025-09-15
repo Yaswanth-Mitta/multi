@@ -121,6 +121,19 @@ class ProductAgent(Agent):
         market_analysis = self.llm_service.query_llm(market_analysis_prompt)
         purchase_analysis = self.llm_service.query_llm(purchase_prompt)
         
+        # Store research data in memory if available
+        if context and 'memory' in context:
+            memory = context['memory']
+            research_data = {
+                'web_content': search_context,
+                'youtube_content': str(youtube_reviews),
+                'reddit_content': str(reddit_posts),
+                'search_results': search_results
+            }
+            # Extract product name from query
+            product_name = query.replace('review', '').replace('analysis', '').strip()
+            memory.start_new_session(product_name, research_data)
+        
         return f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                        PRODUCT MARKET ANALYSIS                               ║
@@ -135,8 +148,12 @@ class ProductAgent(Agent):
 🎯 PURCHASE ASSESSMENT:
 {purchase_analysis}
 
+💬 CONVERSATIONAL MODE ACTIVATED
+→ Ask follow-up questions about this product (colors, price, specs, etc.)
+→ Type 'exit' to start fresh research
+
 ═══════════════════════════════════════════════════════════════════════════════
-Product Analysis | Search Data + AWS Bedrock
+Product Analysis + Conversational Mode | Search Data + AWS Bedrock
 ═══════════════════════════════════════════════════════════════════════════════
         """.strip()
     
