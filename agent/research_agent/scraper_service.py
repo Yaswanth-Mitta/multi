@@ -34,38 +34,52 @@ class ScraperService:
     def _scrape_single_url(self, url: str, max_length: int) -> Dict[str, Any]:
         """Scrape content from a single URL"""
         try:
-            response = self.session.get(url, timeout=10)
+            print(f"Scraping: {url}")
+            response = self.session.get(url, timeout=15)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
             # Remove script and style elements
-            for script in soup(["script", "style", "nav", "footer", "header"]):
+            for script in soup(["script", "style", "nav", "footer", "header", "aside"]):
                 script.decompose()
             
             # Extract title
             title = soup.find('title')
             title_text = title.get_text().strip() if title else "No title"
             
-            # Extract main content
+            # Extract main content with priority order
             content_selectors = [
-                'article', 'main', '.content', '.post-content', 
-                '.entry-content', '.article-body', 'p'
+                'article', 'main', '[role="main"]',
+                '.content', '.post-content', '.entry-content', 
+                '.article-body', '.product-description',
+                '.review-content', '.specs', '.features',
+                'p', 'div'
             ]
             
             content_text = ""
             for selector in content_selectors:
                 elements = soup.select(selector)
                 if elements:
-                    content_text = ' '.join([elem.get_text().strip() for elem in elements])
-                    break
+                    texts = []
+                    for elem in elements[:5]:  # Limit to first 5 elements
+                        text = elem.get_text().strip()
+                        if len(text) > 50:  # Only include substantial text
+                            texts.append(text)
+                    
+                    if texts:
+                        content_text = ' '.join(texts)
+                        break
             
-            # Fallback to all text
-            if not content_text:
-                content_text = soup.get_text()
+            # Fallback to all text if nothing found
+            if not content_text or len(content_text) < 100:
+                all_text = soup.get_text()
+                content_text = all_text if all_text else "No content found"
             
             # Clean and truncate content
             content_text = ' '.join(content_text.split())[:max_length]
+            
+            print(f"Successfully scraped {len(content_text)} characters from {url}")
             
             return {
                 'url': url,
@@ -75,9 +89,10 @@ class ScraperService:
             }
             
         except Exception as e:
+            print(f"Failed to scrape {url}: {str(e)}")
             return {
                 'url': url,
-                'title': f"Failed to scrape: {str(e)}",
-                'content': "",
+                'title': f"Scraping failed: {str(e)[:100]}",
+                'content': f"Unable to scrape content from {url}. Error: {str(e)}",
                 'scraped': False
             }
