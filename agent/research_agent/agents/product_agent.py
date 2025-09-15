@@ -33,6 +33,13 @@ class ProductAgent(Agent):
         print("\nSearching YouTube for reviews...")
         youtube_reviews = self.youtube.search_reviews(query)
         
+        # Extract transcripts from YouTube videos
+        print("\nExtracting YouTube transcripts...")
+        for i, video in enumerate(youtube_reviews[:2]):  # Limit to first 2 videos
+            transcript = self.youtube.get_video_transcript(video['url'])
+            video['transcript'] = transcript
+            print(f"Transcript {i+1}: {len(transcript)} characters")
+        
         # Get Reddit discussions
         print("\nSearching Reddit for discussions...")
         reddit_posts = self.reddit.search_reviews(query)
@@ -66,11 +73,18 @@ class ProductAgent(Agent):
                 enhanced_context += "Scraped Content: Not available\n"
             enhanced_context += "\n"
         
-        enhanced_context += "\n=== YOUTUBE REVIEWS ===\n"
+        enhanced_context += "\n=== YOUTUBE REVIEWS & TRANSCRIPTS ===\n"
         for i, video in enumerate(youtube_reviews, 1):
             enhanced_context += f"{i}. 📺 {video['title']}\n"
             enhanced_context += f"   Views: {video['views']}\n"
-            enhanced_context += f"   URL: {video['url']}\n\n"
+            enhanced_context += f"   URL: {video['url']}\n"
+            
+            # Add transcript if available
+            if 'transcript' in video and video['transcript']:
+                enhanced_context += f"   Transcript: {video['transcript'][:500]}...\n"
+            else:
+                enhanced_context += "   Transcript: Not available\n"
+            enhanced_context += "\n"
         
         enhanced_context += "\n=== REDDIT DISCUSSIONS ===\n"
         for i, post in enumerate(reddit_posts, 1):
