@@ -112,23 +112,35 @@ class AIOrchestrator:
         query_lower = query.lower()
         
         # Keywords that clearly indicate follow-up questions
-        followup_keywords = ['camera', 'battery', 'price', 'color', 'colors', 'screen', 'display', 
-                           'performance', 'storage', 'memory', 'size', 'weight', 'features',
-                           'what', 'how', 'when', 'where', 'why', 'is it', 'does it', 'can it',
-                           'details', 'detail', 'about', 'specs', 'specification']
+        followup_keywords = [
+            'camera', 'battery', 'price', 'color', 'colors', 'screen', 'display', 
+            'performance', 'storage', 'memory', 'size', 'weight', 'features',
+            'what', 'how', 'when', 'where', 'why', 'is it', 'does it', 'can it',
+            'details', 'detail', 'about', 'specs', 'specification', 'tell me',
+            'more about', 'explain', 'describe', 'show me', 'good', 'bad',
+            'pros', 'cons', 'worth', 'buy', 'purchase', 'recommend'
+        ]
+        
+        # Short queries are likely follow-ups
+        if len(query.split()) <= 3:
+            return False
         
         # If it's clearly a follow-up question
         if any(keyword in query_lower for keyword in followup_keywords):
             return False
         
         # Keywords that indicate new research
-        new_research_keywords = ['review of', 'analysis of', 'compare with']
+        new_research_keywords = ['review of', 'analysis of', 'compare', 'vs', 'versus']
         
         # If query contains completely different product names
         if self.memory.current_session:
             current_product = self.memory.current_session['product'].lower()
-            different_products = ['iphone', 'samsung', 'oneplus', 'xiaomi', 'huawei', 'sony', 'lg']
-            if any(product in query_lower for product in different_products) and not any(word in current_product for word in query_lower.split()):
+            # Check if query mentions a completely different product
+            product_brands = ['iphone', 'samsung', 'oneplus', 'xiaomi', 'huawei', 'sony', 'lg', 'pixel', 'galaxy']
+            mentioned_products = [p for p in product_brands if p in query_lower]
+            current_products = [p for p in product_brands if p in current_product]
+            
+            if mentioned_products and current_products and not any(p in current_products for p in mentioned_products):
                 return True
         
         # If it contains explicit new research keywords
@@ -143,18 +155,20 @@ class AIOrchestrator:
         
         # Create focused prompt for follow-up
         followup_prompt = f"""
-        You are answering a follow-up question about {self.memory.current_session['product']} using previously researched data.
+        You are a product expert answering a follow-up question about {self.memory.current_session['product']}.
         
-        QUESTION: {query}
+        USER QUESTION: {query}
         
-        RESEARCH DATA:
+        AVAILABLE RESEARCH DATA:
         {research_context}
         
         INSTRUCTIONS:
-        - Answer the specific question using the research data
-        - Be concise and direct
-        - Reference specific details from the research when relevant
-        - If the question can't be answered from the data, say so
+        - Answer the specific question using the research data provided
+        - Be detailed and informative while staying focused on the question
+        - Reference specific details from reviews, specs, or user feedback when relevant
+        - If the exact information isn't in the data, provide the closest relevant information
+        - Use a conversational, helpful tone
+        - Structure your response clearly with bullet points if needed
         """
         
         response = self.llm_service.query_llm(followup_prompt)
@@ -163,14 +177,21 @@ class AIOrchestrator:
         self.memory.add_conversation(query, response)
         
         return f"""
-💬 FOLLOW-UP RESPONSE ({self.memory.current_session['product']})
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ 💬 CONVERSATIONAL RESPONSE - {self.memory.current_session['product'].upper():<40} │
+└────────────────────────────────────────────────────────────────────────────────┘
 
 {response}
 
-💡 Ask more questions about this product, or type 'exit' to start fresh research.
+💡 Continue asking questions about {self.memory.current_session['product']} or type 'exit' for new research.
         """.strip()
     
     def clear_memory(self):
         """Clear conversation memory"""
         self.memory.clear_session()
+    
+    def __del__(self):
+        """Cleanup when orchestrator is destroyed"""
+        if hasattr(self, 'memory'):
+            self.memory.clear_session()
     

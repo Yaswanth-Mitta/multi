@@ -72,7 +72,6 @@ def main():
             print()
             # Process the query
             result = orchestrator.analyze_query(user_input)
-            print()
             print(result)
             print()
             
