@@ -7,3 +7,6 @@ yfinance>=0.2.18
 pandas>=2.0.0
 langchain>=0.1.0
 langchain-community>=0.0.10
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+youtube-transcript-api>=0.6.0
