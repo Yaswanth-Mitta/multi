@@ -12,12 +12,15 @@ class NewsAgent(Agent):
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
         category = context.get('category', 'NEWS') if context else 'NEWS'
+        print(f"📊 NewsAgent processing: category={category}")
         
         # Handle stock queries with real-time data
         if category == 'STOCKS':
+            print("🎯 Routing to stock handler")
             return self._handle_stock_query(query)
         
         # Handle regular news queries
+        print("📰 Routing to news handler")
         return self._handle_news_query(query, category)
     
     def _handle_news_query(self, query: str, category: str) -> str:
@@ -65,10 +68,12 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
     
     def _handle_stock_query(self, query: str) -> str:
         """Handle stock-specific queries with real-time data and news"""
+        print("🔍 ENTERING STOCK HANDLER")
         print("Fetching real-time stock data...")
         
         # Step 1: Search for stock symbols
         symbols = self.stock_service.search_stock_symbol(query)
+        print(f"Found symbols: {symbols}")
         
         if not symbols:
             return "No stock symbols found for the query. Please use specific company names or stock symbols."
@@ -79,6 +84,7 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
         
         for symbol in symbols:
             data = self.stock_service.get_stock_data(symbol)
+            print(f"Stock data for {symbol}: {data}")
             if data:
                 company_names.append(data['name'])
                 stock_data_context += f"""
