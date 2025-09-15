@@ -10,10 +10,13 @@ load_dotenv()
 def main():
     """Main function to run the Research Agent"""
     print("=== AI Research Orchestrator ===")
-    print("Intelligent agent that routes queries to appropriate services:")
-    print("📰 Stocks/News → Real-time NewsData.io API")
-    print("🛍️  Products → Google Search + Market Analysis")
-    print("🤖 All powered by AWS Bedrock LLMs")
+    print("Clean Architecture Multi-Agent LLM System:")
+    print("📰 News/Stocks Agent → Real-time NewsData.io API")
+    print("🛍️  Product Agent → Google Search + Market Analysis")
+    print("🤖 General Agent → Comprehensive Analysis")
+    print("✅ Validator Agent → Information Validation")
+    print("🏭 Factory Pattern → Dynamic Agent Creation")
+    print("🎯 Orchestrator → Centralized Workflow Control")
     print()
     
     # Validate configuration
