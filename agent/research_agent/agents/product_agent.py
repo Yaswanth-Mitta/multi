@@ -2,11 +2,13 @@ from typing import Dict, Any
 from ..interfaces import Agent
 from ..search_service import SearchService
 from ..llm_service import LLMService
+from ..scraper_service import ScraperService
 
 class ProductAgent(Agent):
     def __init__(self, search_service: SearchService, llm_service: LLMService):
         self.search_service = search_service
         self.llm_service = llm_service
+        self.scraper = ScraperService()
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
         # Get product search data
@@ -14,10 +16,22 @@ class ProductAgent(Agent):
         if not search_results:
             return "No product data found for the query."
         
-        search_context = "\n".join([
-            f"Title: {result['title']}\nSnippet: {result['snippet']}\n"
-            for result in search_results
-        ])
+        # Scrape actual content from URLs
+        print("Scraping content from search results...")
+        urls = [result['link'] for result in search_results if result.get('link')]
+        scraped_data = self.scraper.scrape_content(urls)
+        
+        # Combine search results with scraped content
+        enhanced_context = ""
+        for i, result in enumerate(search_results):
+            enhanced_context += f"Title: {result['title']}\nSnippet: {result['snippet']}\n"
+            
+            # Add scraped content if available
+            if i < len(scraped_data) and scraped_data[i]['scraped']:
+                enhanced_context += f"Content: {scraped_data[i]['content'][:500]}...\n"
+            enhanced_context += "\n"
+        
+        search_context = enhanced_context
         
         market_analysis_prompt = f"""
         Based on product search data for "{query}":
