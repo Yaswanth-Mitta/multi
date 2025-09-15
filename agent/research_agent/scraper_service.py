@@ -3,13 +3,6 @@ from bs4 import BeautifulSoup
 from typing import List, Dict, Any
 import time
 import random
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 
 class ScraperService:
     def __init__(self):
@@ -22,13 +15,12 @@ class ScraperService:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
-        self.use_selenium = True
     
     def scrape_content(self, urls: List[str], max_content_length: int = 1000) -> List[Dict[str, Any]]:
         """Scrape content from multiple URLs with enhanced fallback"""
         scraped_data = []
         
-        for url in urls[:5]:  # Increase to 5 URLs for better data coverage
+        for url in urls[:5]:  # Process up to 5 URLs
             try:
                 content = self._scrape_single_url(url, max_content_length)
                 if content:
@@ -51,18 +43,9 @@ class ScraperService:
         return scraped_data
     
     def _scrape_single_url(self, url: str, max_length: int) -> Dict[str, Any]:
-        """Scrape content from a single URL using Selenium or requests"""
-        # Try Selenium first for better content extraction
-        if self.use_selenium:
-            try:
-                return self._scrape_with_selenium(url, max_length)
-            except Exception as selenium_error:
-                print(f"Selenium scraping failed for {url}: {selenium_error}")
-                # Fall back to requests
-        
-        # Fallback to requests method
+        """Scrape content from a single URL"""
         try:
-            print(f"Scraping with requests: {url}")
+            print(f"Scraping: {url}")
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
             
@@ -115,88 +98,6 @@ class ScraperService:
                 'content': content_text,
                 'scraped': True
             }
-    
-    def _scrape_with_selenium(self, url: str, max_length: int) -> Dict[str, Any]:
-        """Scrape content using Selenium for JavaScript-heavy sites"""
-        driver = None
-        try:
-            print(f"Scraping with Selenium: {url}")
-            
-            # Setup Chrome options
-            chrome_options = Options()
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument('--disable-gpu')
-            chrome_options.add_argument('--window-size=1920,1080')
-            
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            
-            driver.get(url)
-            
-            # Wait for page to load
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.TAG_NAME, "body"))
-            )
-            
-            # Additional wait for dynamic content
-            time.sleep(2)
-            
-            # Extract title
-            title = driver.title or "No title"
-            
-            # Extract main content
-            content_selectors = [
-                'article', 'main', '[role="main"]',
-                '.content', '.post-content', '.entry-content',
-                '.article-body', '.product-description',
-                '.review-content', '.specs', '.features'
-            ]
-            
-            content_text = ""
-            for selector in content_selectors:
-                try:
-                    elements = driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        texts = []
-                        for elem in elements[:3]:  # Limit to first 3 elements
-                            text = elem.text.strip()
-                            if len(text) > 50:
-                                texts.append(text)
-                        
-                        if texts:
-                            content_text = ' '.join(texts)
-                            break
-                except:
-                    continue
-            
-            # Fallback to body text
-            if not content_text or len(content_text) < 100:
-                try:
-                    body = driver.find_element(By.TAG_NAME, "body")
-                    content_text = body.text
-                except:
-                    content_text = "No content found"
-            
-            # Clean and truncate content
-            content_text = ' '.join(content_text.split())[:max_length]
-            
-            driver.quit()
-            
-            print(f"Successfully scraped {len(content_text)} characters with Selenium")
-            
-            return {
-                'url': url,
-                'title': title[:200],
-                'content': content_text,
-                'scraped': True
-            }
-            
-        except Exception as e:
-            if driver:
-                driver.quit()
-            raise e
             
         except Exception as e:
             print(f"Failed to scrape {url}: {str(e)}")
@@ -244,7 +145,3 @@ class ScraperService:
                 'title': 'Product Review - Professional Analysis',
                 'content': 'Professional product review featuring comprehensive testing, detailed feature analysis, and expert evaluation. The review covers design quality, performance metrics, user experience assessment, and competitive comparison. Expert analysis includes hands-on testing results, real-world usage scenarios, and detailed pros and cons evaluation based on extensive product evaluation.'
             }
-    
-    def __del__(self):
-        """Cleanup method"""
-        pass
