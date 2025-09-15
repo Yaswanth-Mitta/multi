@@ -37,16 +37,27 @@ class DuckDuckGoService:
                     link = title_elem.get('href', '')
                     
                     # Fix DuckDuckGo redirect URLs
-                    if link.startswith('/l/?uddg='):
+                    if '/l/?uddg=' in link:
                         # Extract actual URL from DuckDuckGo redirect
-                        parsed = urllib.parse.parse_qs(link.split('?', 1)[1])
-                        if 'uddg' in parsed:
-                            link = urllib.parse.unquote(parsed['uddg'][0])
+                        try:
+                            # Parse the redirect URL
+                            if '&uddg=' in link:
+                                actual_url = link.split('&uddg=')[1].split('&')[0]
+                            elif '?uddg=' in link:
+                                actual_url = link.split('?uddg=')[1].split('&')[0]
+                            else:
+                                actual_url = link
+                            
+                            # URL decode the extracted URL
+                            link = urllib.parse.unquote(actual_url)
+                            print(f"Extracted URL: {link}")
+                        except Exception as e:
+                            print(f"Failed to extract URL from {link}: {e}")
                     
                     # Ensure URL has scheme
                     if link.startswith('//'):
                         link = 'https:' + link
-                    elif not link.startswith('http'):
+                    elif not link.startswith('http') and not link.startswith('//'):
                         link = 'https://' + link
                     
                     snippet = snippet_elem.get_text().strip() if snippet_elem else ""
@@ -58,6 +69,8 @@ class DuckDuckGoService:
                     })
             
             print(f"Found {len(results)} DuckDuckGo results")
+            for i, result in enumerate(results):
+                print(f"Result {i+1} URL: {result['link']}")
             return results
             
         except Exception as e:
