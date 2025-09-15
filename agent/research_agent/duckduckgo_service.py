@@ -35,6 +35,21 @@ class DuckDuckGoService:
                 if title_elem:
                     title = title_elem.get_text().strip()
                     link = title_elem.get('href', '')
+                    
+                    # Fix DuckDuckGo redirect URLs
+                    if link.startswith('/l/?uddg='):
+                        # Extract actual URL from DuckDuckGo redirect
+                        import urllib.parse
+                        parsed = urllib.parse.parse_qs(link.split('?', 1)[1])
+                        if 'uddg' in parsed:
+                            link = urllib.parse.unquote(parsed['uddg'][0])
+                    
+                    # Ensure URL has scheme
+                    if link.startswith('//'):
+                        link = 'https:' + link
+                    elif not link.startswith('http'):
+                        link = 'https://' + link
+                    
                     snippet = snippet_elem.get_text().strip() if snippet_elem else ""
                     
                     results.append({
