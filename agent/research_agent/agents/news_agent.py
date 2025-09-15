@@ -25,44 +25,27 @@ class NewsAgent(Agent):
     
     def _handle_news_query(self, query: str, category: str) -> str:
         """Handle regular news queries"""
-        # Get news data
-        news_results = self.news_service.search_news(query)
-        if not news_results:
-            return "No real-time data found for the query."
+        # COMMENTED OUT - PAID SERVICE
+        # news_results = self.news_service.search_news(query)
+        # if not news_results:
+        #     return "No real-time data found for the query."
         
-        news_context = "\n".join([
-            f"Title: {article['title']}\nDescription: {article['description']}\nSource: {article['source_id']}\nDate: {article['pubDate']}\n"
-            for article in news_results[:3]
-        ])
-        
-        analysis_prompt = f"""
-        Based on real-time news data about "{query}", provide analysis:
-        
-        News Data:
-        {news_context}
-        
-        Provide:
-        1. Current market sentiment/trends
-        2. Key developments and impact
-        3. Risk assessment
-        4. Actionable insights
-        """
-        
-        analysis = self.llm_service.query_llm(analysis_prompt)
+        news_context = f"News service disabled (NewsData.io is paid). Query was: {query}"
         
         return f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                        REAL-TIME NEWS ANALYSIS                               ║
+║                        NEWS SERVICE DISABLED                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 📋 QUERY: {query}
 🏷️  CATEGORY: {category}
 
-📰 REAL-TIME DATA ANALYSIS:
-{analysis}
+📰 NEWS SERVICE STATUS:
+NewsData.io service is disabled (paid service)
+For stock queries, use stock-specific commands instead.
 
 ═══════════════════════════════════════════════════════════════════════════════
-Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
+News Service Disabled | Use Stock Analysis Instead
 ═══════════════════════════════════════════════════════════════════════════════
         """.strip()
     
@@ -88,25 +71,27 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
             if data:
                 company_names.append(data['name'])
                 stock_data_context += f"""
-📊 {data['name']} ({data['symbol']})
+┌─────────────────────────────────────────────────────────────┐
+│  {data['name']} ({data['symbol']})                          
+└─────────────────────────────────────────────────────────────┘
 
-💰 CURRENT TRADING:
-   Current Price: ${data['current_price']}
-   Change: ${data['change']} ({data['change_percent']:+.2f}%)
-   Today's Open: ${data['today_open']}
-   Today's Range: ${data['today_low']} - ${data['today_high']}
-   Volume: {data['today_volume']:,}
+💰 CURRENT TRADING SESSION:
+   ├─ Current Price: ${data['current_price']}
+   ├─ Change: ${data['change']} ({data['change_percent']:+.2f}%)
+   ├─ Today's Open: ${data['today_open']}
+   ├─ Day Range: ${data['today_low']} - ${data['today_high']}
+   └─ Volume: {data['today_volume']:,}
 
-📈 YESTERDAY'S DATA:
-   Open: ${data['yesterday_open']}
-   Close: ${data['yesterday_close']}
-   Range: ${data['yesterday_low']} - ${data['yesterday_high']}
-   Volume: {data['yesterday_volume']:,}
+📈 PREVIOUS SESSION:
+   ├─ Yesterday Open: ${data['yesterday_open']}
+   ├─ Yesterday Close: ${data['yesterday_close']}
+   ├─ Yesterday Range: ${data['yesterday_low']} - ${data['yesterday_high']}
+   └─ Yesterday Volume: {data['yesterday_volume']:,}
 
-📋 KEY METRICS:
-   Market Cap: ${data['market_cap']:,}
-   P/E Ratio: {data['pe_ratio']}
-   52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
+📊 KEY METRICS:
+   ├─ Market Cap: ${data['market_cap']:,}
+   ├─ P/E Ratio: {data['pe_ratio']}
+   └─ 52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
 
 """
         
@@ -116,16 +101,9 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
         for index, data in market_summary.items():
             market_context += f"{index}: ${data['price']} ({data['change_percent']:+.2f}%)\n"
         
-        # Step 4: Get related news for the company
-        print("Fetching related news...")
-        news_context = ""
-        
-        for company_name in company_names[:2]:  # Limit to 2 companies
-            news_results = self.news_service.search_news(f"{company_name} stock earnings financial")
-            if news_results:
-                news_context += f"\nNews for {company_name}:\n"
-                for article in news_results[:3]:
-                    news_context += f"• {article['title']}\n  {article['description'][:150]}...\n"
+        # Step 4: Get related news for the company (COMMENTED OUT - PAID SERVICE)
+        print("Skipping news fetch (paid service)...")
+        news_context = "\n📰 News Analysis: Skipped (NewsData.io is a paid service)\n"
         
         # Step 5: Combine all data and send to LLM
         print("Analyzing with LLM...")
@@ -139,13 +117,10 @@ Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
         MARKET CONTEXT:
         {market_context}
         
-        RECENT NEWS & DEVELOPMENTS:
-        {news_context}
-        
-        Based on the real-time stock data and recent news, provide:
+        Based on the real-time stock data, provide:
         1. Current Stock Performance Analysis
-        2. Recent News Impact Assessment
-        3. Market Sentiment & Trends
+        2. Technical Analysis (price trends, volume)
+        3. Market Position & Valuation
         4. Investment Recommendation (Buy/Hold/Sell)
         5. Risk Factors & Opportunities
         6. Price Target & Timeline
