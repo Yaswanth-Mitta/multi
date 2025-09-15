@@ -4,7 +4,6 @@ from ..search_service import SearchService
 from ..llm_service import LLMService
 from ..scraper_service import ScraperService
 from ..youtube_service import YouTubeService
-from ..reddit_service import RedditService
 from ..langchain_service import LangChainService
 import time
 
@@ -14,7 +13,6 @@ class ProductAgent(Agent):
         self.llm_service = llm_service
         self.scraper = ScraperService()
         self.youtube = YouTubeService()
-        self.reddit = RedditService()
         self.langchain = LangChainService()
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
@@ -52,9 +50,8 @@ class ProductAgent(Agent):
         else:
             print("\nSkipping YouTube search (not a review query)")
         
-        # Get Reddit discussions
-        print("\nSearching Reddit for discussions...")
-        reddit_posts = self.reddit.search_reviews(query)
+        # Reddit scraping removed
+        reddit_posts = []
         
         # Scrape actual content from URLs
         print("\nScraping content from search results...")
@@ -73,7 +70,7 @@ class ProductAgent(Agent):
         # Use LangChain to process and structure all data
         print("\nProcessing data with LangChain...")
         search_context = self.langchain.create_comprehensive_context(
-            search_results, scraped_data, youtube_reviews, reddit_posts
+            search_results, scraped_data, youtube_reviews, []
         )
         
         market_analysis_prompt = f"""
@@ -133,7 +130,6 @@ class ProductAgent(Agent):
             research_data = {
                 'web_content': search_context,
                 'youtube_content': str(youtube_reviews),
-                'reddit_content': str(reddit_posts),
                 'search_results': search_results
             }
             # Extract product name from query

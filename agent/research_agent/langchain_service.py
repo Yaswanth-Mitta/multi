@@ -90,10 +90,13 @@ class LangChainService:
             youtube_content = self.process_youtube_data(youtube_reviews)
             context += f"\\n{youtube_content}\\n"
         
-        # Add Reddit discussions
-        context += "\\n=== REDDIT USER DISCUSSIONS ===\\n"
-        for i, post in enumerate(reddit_posts, 1):
-            context += f"{i}. {post['title']} ({post['subreddit']})\\n"
+        # Add Reddit discussions (if any)
+        if reddit_posts:
+            context += "\\n=== REDDIT USER DISCUSSIONS ===\\n"
+            for i, post in enumerate(reddit_posts, 1):
+                context += f"{i}. {post['title']} ({post['subreddit']})\\n"
+        else:
+            context += "\\n=== REDDIT DISCUSSIONS ===\\nReddit scraping disabled\\n"
         
         # Add search result summaries
         context += "\\n=== SEARCH RESULT SUMMARIES ===\\n"
