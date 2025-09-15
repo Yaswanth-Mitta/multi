@@ -81,6 +81,10 @@ class StockService:
         if query.upper() in ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NFLX', 'NVDA']:
             symbols.append(query.upper())
         
+        # Check if query contains stock symbol
+        if 'nvda' in query_lower or 'nvidia' in query_lower:
+            symbols.append('NVDA')
+        
         # Company name match
         for company, symbol in common_stocks.items():
             if company in query_lower:

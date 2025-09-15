@@ -17,6 +17,11 @@ class NewsAgent(Agent):
         if category == 'STOCKS':
             return self._handle_stock_query(query)
         
+        # Handle regular news queries
+        return self._handle_news_query(query, category)
+    
+    def _handle_news_query(self, query: str, category: str) -> str:
+        """Handle regular news queries"""
         # Get news data
         news_results = self.news_service.search_news(query)
         if not news_results:
