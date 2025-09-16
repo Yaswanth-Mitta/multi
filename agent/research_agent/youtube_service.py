@@ -9,10 +9,21 @@ import random
 
 try:
     from youtube_transcript_api import YouTubeTranscriptApi
-    TRANSCRIPT_API_AVAILABLE = True
-except ImportError:
+    # Test the new API format
+    ytt_api = YouTubeTranscriptApi()
+    if hasattr(ytt_api, 'fetch'):
+        TRANSCRIPT_API_AVAILABLE = True
+        print("✅ YouTube Transcript API (free) is available")
+    else:
+        TRANSCRIPT_API_AVAILABLE = False
+        print("⚠️ YouTube Transcript API imported but fetch method not found")
+except ImportError as e:
     TRANSCRIPT_API_AVAILABLE = False
-    print("YouTube Transcript API not available, using fallback method")
+    print(f"⚠️ YouTube Transcript API not installed: {e}")
+    print("   Install with: pip install youtube-transcript-api")
+except Exception as e:
+    TRANSCRIPT_API_AVAILABLE = False
+    print(f"⚠️ YouTube Transcript API error: {e}")
 
 class YouTubeService:
     def __init__(self):
@@ -21,6 +32,12 @@ class YouTubeService:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        
+        # Initialize YouTube Transcript API if available
+        if TRANSCRIPT_API_AVAILABLE:
+            self.ytt_api = YouTubeTranscriptApi()
+        else:
+            self.ytt_api = None
     
     def search_reviews(self, product: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """Search YouTube for product reviews"""
@@ -77,19 +94,27 @@ class YouTubeService:
             if not video_id:
                 return "Could not extract video ID"
             
-            # Method 1: Try YouTube Transcript API
-            if TRANSCRIPT_API_AVAILABLE:
+            # Method 1: Try YouTube Transcript API (Free service)
+            if TRANSCRIPT_API_AVAILABLE and self.ytt_api:
                 try:
-                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'en-US'])
-                    transcript_text = ' '.join([item['text'] for item in transcript_list])
+                    # Use the new API format
+                    fetched_transcript = self.ytt_api.fetch(video_id, languages=['en', 'en-US'])
+                    
+                    # Extract text from the transcript snippets
+                    transcript_text = ' '.join([snippet.text for snippet in fetched_transcript])
+                    
                     if transcript_text and len(transcript_text) > 100:
-                        print(f"Successfully extracted {len(transcript_text)} characters via API")
+                        print(f"Successfully extracted {len(transcript_text)} characters via free YouTube API")
                         return transcript_text[:2000]
+                    else:
+                        print("Transcript too short, using fallback")
+                        
                 except Exception as api_error:
-                    print(f"Transcript API failed: {api_error}")
+                    print(f"Free YouTube transcript API failed: {str(api_error)[:100]}...")
+                    print("   This is normal - many videos don't have captions or are restricted")
                     # Fall through to generate realistic content
             else:
-                print("Transcript API not available, using fallback content")
+                print("YouTube transcript API not available, using fallback content")
             
             # Method 2: Generate realistic content based on video ID
             return self._generate_realistic_review_content(video_id)
@@ -129,7 +154,10 @@ class YouTubeService:
         
         # Use video_id to consistently select content
         content_index = hash(video_id) % len(content_types)
-        return content_types[content_index]
+        selected_content = content_types[content_index]
+        
+        print(f"Generated realistic review content ({len(selected_content)} chars) for video {video_id}")
+        return selected_content
     
     def _get_fallback_videos(self, product: str, max_results: int) -> List[Dict[str, Any]]:
         """Generate fallback video results with unique video IDs"""
