@@ -109,50 +109,37 @@ class YouTubeService:
         return videos
     
     def get_video_transcript(self, video_url: str) -> str:
-        """Extract transcript using YouTubeTranscriptApi.fetch() method"""
+        """Extract transcript using youtube_transcript_api"""
         try:
             print(f"Fetching transcript from: {video_url}")
             
             video_id = self._extract_video_id(video_url)
             if not video_id:
                 return "Could not extract video ID"
-            
-            # Use fetch method from YouTubeTranscriptApi
+
             if TRANSCRIPT_API_AVAILABLE:
                 try:
-                    # List available transcripts
-                    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                    
-                    # Try to fetch English transcript
-                    try:
-                        transcript = transcript_list.find_transcript(['en'])
-                        transcript_data = transcript.fetch()
-                        print(f"✅ Fetched English transcript")
-                    except:
-                        # Try generated transcript
-                        transcript = transcript_list.find_generated_transcript(['en', 'hi'])
-                        transcript_data = transcript.fetch()
-                        print(f"✅ Fetched generated transcript")
-                    
-                    # Convert to text
-                    transcript_text = ' '.join([item['text'] for item in transcript_data])
-                    
+                    # Let the API find the best available transcript in English or Hindi
+                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
+                    transcript_text = ' '.join([item['text'] for item in transcript_list])
+
                     if len(transcript_text) > 100:
-                        print(f"Successfully fetched {len(transcript_text)} characters")
+                        print(f"✅ Successfully fetched transcript: {len(transcript_text)} characters")
                         return transcript_text[:2000]
                     else:
-                        print("Transcript too short")
-                        
+                        print("⚠️ Transcript found, but it is too short.")
+
                 except Exception as api_error:
-                    print(f"YouTube transcript fetch failed: {str(api_error)[:100]}")
-            
+                    print(f"⚠️ YouTube transcript API failed: {str(api_error)}")
+
             # Fallback to page scraping
+            print("--> Falling back to page scraping for content.")
             return self._fallback_page_scrape(video_url)
-            
+
         except Exception as e:
-            print(f"All methods failed: {e}")
-            return f"Failed to fetch content from {video_url}"
-    
+            print(f"❌ All methods failed for {video_url}: {e}")
+            return f"Failed to fetch any content from {video_url}"
+
     async def _fetch_search_results(self, url: str) -> str:
         """Fetch YouTube search results"""
         try:
@@ -165,24 +152,12 @@ class YouTubeService:
         return None
     
     def _fallback_page_scrape(self, video_url: str) -> str:
-        """Fetch video content using transcript API"""
+        """Fallback to scraping basic video info from the page if transcript fails."""
         try:
             video_id = self._extract_video_id(video_url)
             if not video_id:
                 return "Could not extract video ID"
-            
-            # Try transcript API first
-            if TRANSCRIPT_API_AVAILABLE:
-                try:
-                    transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
-                    transcript_text = ' '.join([item['text'] for item in transcript])
-                    
-                    if len(transcript_text) > 100:
-                        print(f"✅ Fetched transcript: {len(transcript_text)} chars")
-                        return transcript_text[:2000]
-                except Exception as e:
-                    print(f"Transcript API failed: {e}")
-            
+
             # Fallback to async page fetch
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -191,7 +166,7 @@ class YouTubeService:
             return result
                         
         except Exception as e:
-            return f"Fetch error: {str(e)[:100]}"
+            return f"Fallback page scrape error: {str(e)[:100]}"
     
     async def _async_page_fetch(self, video_url: str, video_id: str) -> str:
         """Async helper for page fetching"""
