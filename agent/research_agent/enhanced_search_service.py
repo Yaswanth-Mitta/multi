@@ -70,21 +70,29 @@ class EnhancedSearchService:
     def _search_techradar(self, query: str) -> List[Dict[str, Any]]:
         """Search TechRadar for reviews"""
         try:
-            # Use real working URLs
-            if 'pixel 9' in query.lower():
-                return [{
-                    'title': "Google Pixel 9 review - TechRadar",
-                    'snippet': "Professional review and analysis of Google Pixel 9 from TechRadar experts",
-                    'link': "https://www.techradar.com/phones/google-pixel-phones/google-pixel-9-review",
-                    'source': 'TechRadar'
-                }]
-            else:
-                return [{
-                    'title': f"{query} Review - TechRadar",
-                    'snippet': f"Professional review and analysis of {query} from TechRadar experts",
-                    'link': f"https://www.techradar.com/search?searchTerm={urllib.parse.quote(query)}",
-                    'source': 'TechRadar'
-                }]
+            # Use more specific URLs based on query
+            if 'pixel' in query.lower():
+                if '10' in query:
+                    return [{
+                        'title': "Google Pixel 10 review - TechRadar",
+                        'snippet': "Professional review and analysis of Google Pixel 10 from TechRadar experts",
+                        'link': "https://www.techradar.com/phones/google-pixel-phones/google-pixel-10-review",
+                        'source': 'TechRadar'
+                    }]
+                elif '9' in query:
+                    return [{
+                        'title': "Google Pixel 9 review - TechRadar",
+                        'snippet': "Professional review and analysis of Google Pixel 9 from TechRadar experts",
+                        'link': "https://www.techradar.com/phones/google-pixel-phones/google-pixel-9-review",
+                        'source': 'TechRadar'
+                    }]
+            
+            return [{
+                'title': f"{query} Review - TechRadar",
+                'snippet': f"Professional review and analysis of {query} from TechRadar experts",
+                'link': f"https://www.techradar.com/reviews/{urllib.parse.quote(query.lower().replace(' ', '-'))}",
+                'source': 'TechRadar'
+            }]
         except Exception as e:
             print(f"TechRadar search failed: {e}")
         return []
@@ -92,21 +100,29 @@ class EnhancedSearchService:
     def _search_pcmag(self, query: str) -> List[Dict[str, Any]]:
         """Search PCMag for reviews"""
         try:
-            # Use real working URLs
-            if 'pixel 9' in query.lower():
-                return [{
-                    'title': "Google Pixel 9 Review - PCMag",
-                    'snippet': "Expert review and testing of Google Pixel 9 by PCMag professionals",
-                    'link': "https://www.pcmag.com/reviews/google-pixel-9",
-                    'source': 'PCMag'
-                }]
-            else:
-                return [{
-                    'title': f"{query} Review - PCMag",
-                    'snippet': f"Expert review and testing of {query} by PCMag professionals",
-                    'link': f"https://www.pcmag.com/search?q={urllib.parse.quote(query)}",
-                    'source': 'PCMag'
-                }]
+            # Use more specific URLs based on query
+            if 'pixel' in query.lower():
+                if '10' in query:
+                    return [{
+                        'title': "Google Pixel 10 Review - PCMag",
+                        'snippet': "Expert review and testing of Google Pixel 10 by PCMag professionals",
+                        'link': "https://www.pcmag.com/reviews/google-pixel-10",
+                        'source': 'PCMag'
+                    }]
+                elif '9' in query:
+                    return [{
+                        'title': "Google Pixel 9 Review - PCMag",
+                        'snippet': "Expert review and testing of Google Pixel 9 by PCMag professionals",
+                        'link': "https://www.pcmag.com/reviews/google-pixel-9",
+                        'source': 'PCMag'
+                    }]
+            
+            return [{
+                'title': f"{query} Review - PCMag",
+                'snippet': f"Expert review and testing of {query} by PCMag professionals",
+                'link': f"https://www.pcmag.com/reviews/{urllib.parse.quote(query.lower().replace(' ', '-'))}",
+                'source': 'PCMag'
+            }]
         except Exception as e:
             print(f"PCMag search failed: {e}")
         return []

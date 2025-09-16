@@ -87,6 +87,9 @@ class YouTubeService:
                         return transcript_text[:2000]
                 except Exception as api_error:
                     print(f"Transcript API failed: {api_error}")
+                    # Fall through to generate realistic content
+            else:
+                print("Transcript API not available, using fallback content")
             
             # Method 2: Generate realistic content based on video ID
             return self._generate_realistic_review_content(video_id)

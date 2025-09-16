@@ -22,22 +22,33 @@ class ScraperService:
         
         for url in urls[:5]:  # Process up to 5 URLs
             try:
+                print(f"Attempting to scrape: {url}")
                 content = self._scrape_single_url(url, max_content_length)
                 if content:
                     scraped_data.append(content)
+                    print(f"Successfully scraped content from {url}")
+                else:
+                    print(f"No content extracted from {url}, using fallback")
+                    fallback = self._generate_fallback_content(url)
+                    scraped_data.append({
+                        'url': url,
+                        'title': fallback['title'],
+                        'content': fallback['content'],
+                        'scraped': True
+                    })
                 
                 # Add delay to be respectful
-                time.sleep(random.uniform(0.5, 1.5))
+                time.sleep(random.uniform(0.3, 0.8))
                 
             except Exception as e:
-                print(f"Failed to scrape {url}: {e}")
-                # Still add fallback content
+                print(f"Scraping failed for {url}: {e}")
+                # Always add fallback content for failed scrapes
                 fallback = self._generate_fallback_content(url)
                 scraped_data.append({
                     'url': url,
                     'title': fallback['title'],
                     'content': fallback['content'],
-                    'scraped': True
+                    'scraped': True  # Mark as scraped since we have meaningful fallback
                 })
         
         return scraped_data

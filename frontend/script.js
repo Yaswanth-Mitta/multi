@@ -3,6 +3,8 @@ class ResearchAgentUI {
         this.apiUrl = 'http://localhost:8000';
         this.currentSession = null;
         this.conversationHistory = [];
+        this.outputMode = 'terminal'; // 'terminal' or 'report'
+        this.backendAvailable = false;
         
         this.initializeElements();
         this.bindEvents();
@@ -32,7 +34,12 @@ class ResearchAgentUI {
         this.conversationHistory = document.getElementById('conversationHistory');
         this.conversationList = document.getElementById('conversationList');
         
+        // Mode selection elements
+        this.terminalModeBtn = document.getElementById('terminalModeBtn');
+        this.reportModeBtn = document.getElementById('reportModeBtn');
+        
         // Status elements
+        this.backendStatus = document.getElementById('backendStatus');
         this.awsStatus = document.getElementById('awsStatus');
         this.googleStatus = document.getElementById('googleStatus');
         this.newsStatus = document.getElementById('newsStatus');
@@ -65,6 +72,10 @@ class ResearchAgentUI {
         // Clear memory button
         this.clearMemoryBtn.addEventListener('click', () => this.clearMemory());
         
+        // Mode selection buttons
+        this.terminalModeBtn.addEventListener('click', () => this.setOutputMode('terminal'));
+        this.reportModeBtn.addEventListener('click', () => this.setOutputMode('report'));
+        
         // Example query buttons
         document.querySelectorAll('.example-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -75,14 +86,35 @@ class ResearchAgentUI {
         });
     }
 
+    setOutputMode(mode) {
+        this.outputMode = mode;
+        
+        // Update button states
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        if (mode === 'terminal') {
+            this.terminalModeBtn.classList.add('active');
+        } else {
+            this.reportModeBtn.classList.add('active');
+        }
+    }
+
     async checkSystemStatus() {
         try {
             const response = await fetch(`${this.apiUrl}/status`);
             if (response.ok) {
                 const status = await response.json();
-                this.updateSystemStatus(status);
-            } else {
+                this.backendAvailable = true;
                 this.updateSystemStatus({
+                    backend: true,
+                    ...status
+                });
+            } else {
+                this.backendAvailable = false;
+                this.updateSystemStatus({
+                    backend: false,
                     aws: false,
                     google: false,
                     news: false
@@ -90,7 +122,9 @@ class ResearchAgentUI {
             }
         } catch (error) {
             console.log('Backend not running, using demo mode');
+            this.backendAvailable = false;
             this.updateSystemStatus({
+                backend: false,
                 aws: false,
                 google: false,
                 news: false
@@ -99,6 +133,7 @@ class ResearchAgentUI {
     }
 
     updateSystemStatus(status) {
+        this.backendStatus.textContent = status.backend ? '🟢 Connected' : '🔴 Demo Mode';
         this.awsStatus.textContent = status.aws ? '🟢 Connected' : '🔴 Offline';
         this.googleStatus.textContent = status.google ? '🟢 Connected' : '🔴 Offline';
         this.newsStatus.textContent = status.news ? '🟢 Active' : '🟡 Disabled';
@@ -296,7 +331,13 @@ General Analysis | AWS Bedrock
         this.resultTitle.textContent = `Analysis Results`;
         this.resultAgent.textContent = `${result.agent} Agent`;
         this.resultTime.textContent = new Date(result.timestamp).toLocaleString();
-        this.resultContent.innerHTML = `<pre>${result.result}</pre>`;
+        
+        // Format output based on selected mode
+        if (this.outputMode === 'report') {
+            this.resultContent.innerHTML = this.formatCleanReport(result.result);
+        } else {
+            this.resultContent.innerHTML = `<pre>${result.result}</pre>`;
+        }
         
         this.showResults();
         
@@ -338,6 +379,26 @@ General Analysis | AWS Bedrock
         // Call API to clear memory
         fetch(`${this.apiUrl}/clear-memory`, { method: 'POST' })
             .catch(() => console.log('Demo mode - memory cleared locally'));
+    }
+
+    formatCleanReport(rawResult) {
+        // Extract content between analysis sections
+        let cleanContent = rawResult
+            .replace(/[╔═╗║╚╝┌─┐│└┘]/g, '') // Remove box drawing characters
+            .replace(/={3,}/g, '') // Remove separator lines
+            .replace(/\n\s*\n/g, '\n') // Remove extra blank lines
+            .trim();
+        
+        // Convert to HTML with better formatting
+        cleanContent = cleanContent
+            .replace(/📋 QUERY: (.+)/g, '<h3>🔍 Query</h3><p>$1</p>')
+            .replace(/📊 (.+?):/g, '<h4>📊 $1</h4>')
+            .replace(/🎯 (.+?):/g, '<h4>🎯 $1</h4>')
+            .replace(/📈 (.+?):/g, '<h4>📈 $1</h4>')
+            .replace(/💬 (.+?):/g, '<h4>💬 $1</h4>')
+            .replace(/\n/g, '<br>');
+        
+        return `<div class="clean-report">${cleanContent}</div>`;
     }
 
     clearInput() {

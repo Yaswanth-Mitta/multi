@@ -90,8 +90,24 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-section">
+                <h3><i class="fas fa-cogs"></i> Output Mode</h3>
+                <div class="mode-selection">
+                    <button id="terminalModeBtn" class="mode-btn active" data-mode="terminal">
+                        <i class="fas fa-terminal"></i> Terminal Output
+                    </button>
+                    <button id="reportModeBtn" class="mode-btn" data-mode="report">
+                        <i class="fas fa-file-alt"></i> Clean Report
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
                 <h3><i class="fas fa-info-circle"></i> System Status</h3>
                 <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Backend</span>
+                        <span id="backendStatus" class="status-value">🔴 Checking...</span>
+                    </div>
                     <div class="status-item">
                         <span class="status-label">AWS Bedrock</span>
                         <span id="awsStatus" class="status-value">🔴 Checking...</span>
