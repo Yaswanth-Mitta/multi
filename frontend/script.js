@@ -163,10 +163,13 @@ class ResearchAgentUI {
     }
 
     updateSystemStatus(status) {
+        this.backendAvailable = status.backend || false;
         this.backendStatus.textContent = status.backend ? '🟢 Connected' : '🔴 Demo Mode';
         this.awsStatus.textContent = status.aws ? '🟢 Connected' : '🔴 Offline';
         this.googleStatus.textContent = status.google ? '🟢 Connected' : '🔴 Offline';
         this.newsStatus.textContent = status.news ? '🟢 Active' : '🟡 Disabled';
+        
+        console.log(`Backend status updated: ${status.backend ? 'Connected' : 'Demo Mode'}`);
     }
 
     async handleSubmit() {
@@ -191,15 +194,16 @@ class ResearchAgentUI {
 
             if (response.ok) {
                 const result = await response.json();
+                console.log('Received result from backend:', result.demo_mode ? 'Demo Mode' : 'Real Backend');
                 this.displayResults(result, query);
                 this.updateMemoryStatus(result.session);
             } else {
-                // Demo mode - generate mock response
+                console.log('Backend responded with error, using demo mode');
                 const mockResult = this.generateMockResponse(query);
                 this.displayResults(mockResult, query);
             }
         } catch (error) {
-            console.log('Using demo mode');
+            console.log('Connection failed, using demo mode:', error.message);
             const mockResult = this.generateMockResponse(query);
             this.displayResults(mockResult, query);
         }

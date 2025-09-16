@@ -143,31 +143,40 @@ def static_files(filename):
 @app.route('/status', methods=['GET'])
 def get_status():
     """Get system status"""
+    print(f"🔍 Status check - Orchestrator available: {orchestrator is not None}")
+    
     if not orchestrator:
+        print("❌ Orchestrator not available, returning demo mode status")
         return jsonify({
             'aws': False,
             'google': False,
             'news': False,
-            'message': 'Orchestrator not initialized'
+            'backend': False,
+            'message': 'Orchestrator not initialized - Demo mode active'
         })
     
     try:
         # Check if services are available
         aws_status = True  # Assume AWS is available if orchestrator initialized
         google_status = bool(Config.get_google_cse_id())
-        news_status = False  # News service is disabled
+        news_status = bool(Config.get_newsdata_api_key())  # Check if news API key exists
+        
+        print(f"✅ Real backend active - AWS: {aws_status}, Google: {google_status}, News: {news_status}")
         
         return jsonify({
             'aws': aws_status,
             'google': google_status,
             'news': news_status,
-            'message': 'System operational'
+            'backend': True,
+            'message': 'System operational - Full functionality available'
         })
     except Exception as e:
+        print(f"❌ Status check failed: {e}")
         return jsonify({
             'aws': False,
             'google': False,
             'news': False,
+            'backend': False,
             'message': f'Status check failed: {str(e)}'
         }), 500
 
@@ -189,6 +198,8 @@ def analyze_query():
             # Generate demo response
             demo_result = generate_demo_response(query)
             return jsonify(demo_result)
+        
+        print(f"✅ Using real orchestrator for query: {query}")
         
         print(f"🔄 Processing query with orchestrator...")
         # Process the query
@@ -262,10 +273,12 @@ if __name__ == '__main__':
     orchestrator_ready = initialize_orchestrator()
     if orchestrator_ready:
         print("✅ Backend services ready - Full functionality available")
+        print(f"✅ Orchestrator status: {orchestrator is not None}")
     else:
         print("⚠️  Running in demo mode - Limited functionality")
         print("    • Mock responses will be generated")
         print("    • No real API calls will be made")
+        print(f"❌ Orchestrator status: {orchestrator is not None}")
     
     ec2_ip = os.getenv('EC2_PUBLIC_IP', 'your-ec2-ip')
     print("\n🌐 Will try ports: 8000, 8001, 8002, 8003, 8080")
