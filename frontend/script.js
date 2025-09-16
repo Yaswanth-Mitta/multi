@@ -1,6 +1,9 @@
 class ResearchAgentUI {
     constructor() {
-        this.apiUrl = 'http://localhost:8000';
+        // Use current hostname (works for both localhost and EC2)
+        this.baseUrl = `http://${window.location.hostname}`;
+        this.apiUrl = null; // Will be determined by port detection
+        this.portsToTry = [8000, 8001, 8002, 8003, 8080];
         this.currentSession = null;
         this.conversationHistory = [];
         this.outputMode = 'terminal'; // 'terminal' or 'report'
@@ -8,7 +11,7 @@ class ResearchAgentUI {
         
         this.initializeElements();
         this.bindEvents();
-        this.checkSystemStatus();
+        this.detectBackendPort();
     }
 
     initializeElements() {
@@ -101,6 +104,33 @@ class ResearchAgentUI {
         }
     }
 
+    async detectBackendPort() {
+        console.log(`🔍 Detecting backend port on ${this.baseUrl}...`);
+        
+        for (const port of this.portsToTry) {
+            try {
+                const testUrl = `${this.baseUrl}:${port}`;
+                const response = await fetch(`${testUrl}/status`, { 
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000) // 3 second timeout for EC2
+                });
+                
+                if (response.ok) {
+                    this.apiUrl = testUrl;
+                    console.log(`✅ Found backend on ${testUrl}`);
+                    this.checkSystemStatus();
+                    return;
+                }
+            } catch (error) {
+                console.log(`❌ ${this.baseUrl}:${port} not available: ${error.message}`);
+            }
+        }
+        
+        console.log('⚠️  No backend found, using demo mode');
+        this.apiUrl = `${this.baseUrl}:8000`; // Fallback for demo mode
+        this.checkSystemStatus();
+    }
+
     async checkSystemStatus() {
         try {
             const response = await fetch(`${this.apiUrl}/status`);
@@ -121,7 +151,7 @@ class ResearchAgentUI {
                 });
             }
         } catch (error) {
-            console.log('Backend not running, using demo mode');
+            console.log(`Backend not available at ${this.apiUrl}, using demo mode`);
             this.backendAvailable = false;
             this.updateSystemStatus({
                 backend: false,

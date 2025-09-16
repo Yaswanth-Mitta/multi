@@ -1,7 +1,10 @@
 #!/bin/bash
 
-echo "🌐 Starting AI Research Orchestrator - Web Interface Only"
-echo "========================================================"
+echo "🔧 Starting Backend API Server Only"
+echo "=================================="
+
+# Kill any existing process on port 8000
+./kill-port.sh
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
@@ -21,14 +24,11 @@ pip install -r frontend/requirements.txt
 
 echo ""
 EC2_IP=${EC2_PUBLIC_IP:-"your-ec2-ip"}
-echo "🌐 Starting Web Interface..."
+echo "🚀 Starting Backend API Server..."
 echo "Local: http://localhost:8000"
 echo "EC2 Public: http://$EC2_IP:8000"
-echo "========================================================"
+echo "=================================="
 
-# Start frontend only
+# Start backend API server
 cd frontend
 python app.py
-
-echo ""
-echo "👋 Web interface stopped."
