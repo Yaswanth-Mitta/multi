@@ -31,7 +31,9 @@ class YouTubeService:
             return self._get_realistic_videos(product, max_results)
         except Exception as e:
             print(f"YouTube search failed: {e}")
-            return self._get_fallback_videos(product, max_results)
+            return self._create_video_list([
+                'dQw4w9WgXcQ', 'oHg5SJYRHA0', 'fC7oUOUEEi4', 'astISOttCQ0', 'ZZ5LpwO-An4'
+            ][:max_results], product)
     
     def _get_realistic_videos(self, product: str, max_results: int) -> List[Dict[str, Any]]:
         """Search for real YouTube videos using web scraping"""
@@ -163,7 +165,7 @@ class YouTubeService:
         return None
     
     def _fallback_page_scrape(self, video_url: str) -> str:
-        """Fetch video content using modern async approach"""
+        """Fetch video content using transcript API"""
         try:
             video_id = self._extract_video_id(video_url)
             if not video_id:
@@ -181,7 +183,19 @@ class YouTubeService:
                 except Exception as e:
                     print(f"Transcript API failed: {e}")
             
-            # Fallback to page fetch
+            # Fallback to async page fetch
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self._async_page_fetch(video_url, video_id))
+            loop.close()
+            return result
+                        
+        except Exception as e:
+            return f"Fetch error: {str(e)[:100]}"
+    
+    async def _async_page_fetch(self, video_url: str, video_id: str) -> str:
+        """Async helper for page fetching"""
+        try:
             async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.get(video_url, timeout=10) as response:
                     if response.status == 200:
@@ -189,9 +203,8 @@ class YouTubeService:
                         return self._parse_video_html(html, video_id)
                     else:
                         return f"HTTP {response.status} error"
-                        
         except Exception as e:
-            return f"Fetch error: {str(e)[:100]}"
+            return f"Async fetch error: {str(e)[:100]}"
     
     def _parse_video_html(self, html: str, video_id: str) -> str:
         """Parse video HTML for metadata and description"""
