@@ -50,8 +50,7 @@ class ProductAgent(Agent):
         else:
             print("\nSkipping YouTube search (not a review query)")
         
-        # No Reddit scraping
-        reddit_posts = []
+        # Skip Reddit scraping (service removed)
         
         # Scrape actual content from URLs
         print("\nScraping content from search results...")
@@ -70,7 +69,7 @@ class ProductAgent(Agent):
         # Use LangChain to process and structure all data
         print("\nProcessing data with LangChain...")
         search_context = self.langchain.create_comprehensive_context(
-            search_results, scraped_data, youtube_reviews, []
+            search_results, scraped_data, youtube_reviews
         )
         
         market_analysis_prompt = f"""

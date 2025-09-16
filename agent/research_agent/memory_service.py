@@ -48,10 +48,7 @@ class MemoryService:
             context += "=== YOUTUBE REVIEWS ===\n"
             context += self.research_data['youtube_content'][:1000] + "\n\n"
         
-        # Add Reddit content
-        if 'reddit_content' in self.research_data:
-            context += "=== REDDIT DISCUSSIONS ===\n"
-            context += self.research_data['reddit_content'][:800] + "\n\n"
+        # Reddit content removed (service discontinued)
         
         # Add conversation history
         if self.conversation_history:

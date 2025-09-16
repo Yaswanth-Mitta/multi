@@ -28,9 +28,9 @@ class Config:
         newsdata_key = Config.get_newsdata_api_key()
         google_cse_id = Config.get_google_cse_id()
         
+        # NewsData API is optional (paid service, currently disabled)
         if not newsdata_key:
-            print("Error: NEWSDATA_API_KEY environment variable not set")
-            return False
+            print("Warning: NEWSDATA_API_KEY not set (news service will be disabled)")
         
         if not google_cse_id:
             print("Error: GOOGLE_CSE_ID environment variable not set")

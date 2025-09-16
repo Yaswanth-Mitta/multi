@@ -93,7 +93,7 @@ class LangChainService:
             return "=== YOUTUBE REVIEW ANALYSIS ===\nFailed to process YouTube review data"
     
     def create_comprehensive_context(self, search_results: List[Dict], scraped_data: List[Dict], 
-                                   youtube_reviews: List[Dict], reddit_posts: List[Dict]) -> str:
+                                   youtube_reviews: List[Dict]) -> str:
         """Create comprehensive context using all data sources with enhanced processing"""
         
         context = "=== COMPREHENSIVE PRODUCT REVIEW DATA ===\n\n"
