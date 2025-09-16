@@ -197,22 +197,22 @@ class YouTubeService:
         """Parse video HTML for metadata and description"""
         try:
             soup = BeautifulSoup(html, 'html.parser')
-                
-                # Try to extract video description from meta tags
-                description = ""
-                meta_desc = soup.find('meta', {'name': 'description'})
-                if meta_desc:
-                    description = meta_desc.get('content', '')
-                
-                # Try to extract title
-                title = ""
-                title_tag = soup.find('title')
-                if title_tag:
-                    title = title_tag.get_text()
-                
-                # Combine available information
-                content = f"Video Title: {title}\nDescription: {description}"
-                
+            
+            # Try to extract video description from meta tags
+            description = ""
+            meta_desc = soup.find('meta', {'name': 'description'})
+            if meta_desc:
+                description = meta_desc.get('content', '')
+            
+            # Try to extract title
+            title = ""
+            title_tag = soup.find('title')
+            if title_tag:
+                title = title_tag.get_text()
+            
+            # Combine available information
+            content = f"Video Title: {title}\nDescription: {description}"
+            
             if len(content) > 50:
                 print(f"✅ Parsed video content: {len(content)} characters")
                 return content
