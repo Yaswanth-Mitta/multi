@@ -93,7 +93,7 @@ class LangChainService:
             return "=== YOUTUBE REVIEW ANALYSIS ===\nFailed to process YouTube review data"
     
     def create_comprehensive_context(self, search_results: List[Dict], scraped_data: List[Dict], 
-                                   youtube_reviews: List[Dict]) -> str:
+                                   youtube_reviews: List[Dict], ecommerce_data: Dict = None) -> str:
         """Create comprehensive context using all data sources with enhanced processing"""
         
         context = "=== COMPREHENSIVE PRODUCT REVIEW DATA ===\n\n"
@@ -102,7 +102,44 @@ class LangChainService:
         context += f"DATA SOURCES ANALYZED:\n"
         context += f"- Web Reviews: {len(scraped_data)} sites scraped\n"
         context += f"- YouTube Reviews: {len(youtube_reviews)} videos analyzed\n"
+        context += f"- E-commerce Data: {'Available' if ecommerce_data else 'Not available'}\n"
         context += f"- Search Results: {len(search_results)} results processed\n\n"
+        
+        # Add e-commerce data if available
+        if ecommerce_data:
+            context += "=== E-COMMERCE PRODUCT ANALYSIS ===\n"
+            for platform, data in ecommerce_data.items():
+                if platform != 'summary' and data:
+                    context += f"\n{platform.upper()} MARKETPLACE DATA:\n"
+                    context += f"Product Name: {data.get('product_name', 'N/A')}\n"
+                    context += f"Current Price: {data.get('price', 'N/A')}\n"
+                    context += f"Original Price: {data.get('original_price', 'N/A')}\n"
+                    context += f"Discount: {data.get('discount', 'N/A')}\n"
+                    context += f"Customer Rating: {data.get('rating', 'N/A')} stars\n"
+                    context += f"Total Reviews: {data.get('review_count', 'N/A')}\n"
+                    context += f"Stock Status: {data.get('availability', 'N/A')}\n"
+                    context += f"Delivery Info: {data.get('delivery', 'N/A')}\n"
+                    
+                    if data.get('key_features'):
+                        context += "Key Product Features:\n"
+                        for feature in data['key_features'][:6]:
+                            context += f"  • {feature}\n"
+                    
+                    if data.get('top_reviews'):
+                        context += "Customer Review Highlights:\n"
+                        for review in data['top_reviews'][:3]:
+                            context += f"  {review['rating']}⭐ {review['title']}: {review['text'][:120]}...\n"
+                    context += "\n"
+            
+            # Add price comparison
+            if ecommerce_data.get('summary'):
+                summary = ecommerce_data['summary']
+                context += "MARKETPLACE COMPARISON ANALYSIS:\n"
+                context += f"Price Analysis: {summary['comparison']['price_difference']}\n"
+                context += f"Delivery Comparison: {summary['comparison']['delivery']}\n"
+                context += f"Best Value: {summary['recommendation']['best_price']}\n"
+                context += f"Best Service: {summary['recommendation']['best_service']}\n"
+                context += f"Overall Recommendation: {summary['recommendation']['overall']}\n\n"
         
         # Process web scraping data with enhanced analysis
         web_content = self.process_scraped_data(scraped_data)

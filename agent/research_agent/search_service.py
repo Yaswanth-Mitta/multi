@@ -12,47 +12,19 @@ class SearchService:
         self.enhanced_search = EnhancedSearchService()
     
     def search_products(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
-        """Search for product information using Google Custom Search"""
-        try:
-            print(f"Searching products for: {query}")
-            
-            if not self.google_api_key:
-                print("Google API key not found, using enhanced multi-source search")
-                search_results = self.enhanced_search.search_multiple_sources(query, num_results)
-                
-                # Also get official website results
-                official_results = self.enhanced_search.search_official_websites(query)
-                
-                # Combine results
-                all_results = search_results + official_results
-                return all_results[:num_results]
-            
-            params = {
-                'key': self.google_api_key,
-                'cx': self.google_cse_id,
-                'q': f"{query} specifications reviews price",
-                'num': min(num_results, 10)
-            }
-            
-            response = requests.get(self.base_url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            
-            results = []
-            for item in data.get('items', []):
-                results.append({
-                    'title': item.get('title', ''),
-                    'snippet': item.get('snippet', ''),
-                    'link': item.get('link', '')
-                })
-            
-            print(f"Found {len(results)} search results")
-            return results
-            
-        except Exception as e:
-            print(f"Error in Google search: {e}, falling back to enhanced search")
-            search_results = self.enhanced_search.search_multiple_sources(query, num_results)
-            return search_results if search_results else self._get_fallback_results(query)
+        """Search for product information using enhanced multi-source search"""
+        print(f"Searching products for: {query}")
+        print("Using enhanced multi-source search (no API keys required)")
+        
+        # Use enhanced search (works without API keys)
+        search_results = self.enhanced_search.search_multiple_sources(query, num_results)
+        
+        # Also get official website results
+        official_results = self.enhanced_search.search_official_websites(query)
+        
+        # Combine results
+        all_results = search_results + official_results
+        return all_results[:num_results]
     
     def _get_fallback_results(self, query: str) -> List[Dict[str, Any]]:
         """Fallback search results when all methods fail"""

@@ -22,12 +22,13 @@ class EnhancedSearchService:
         """Search multiple sources for comprehensive results"""
         all_results = []
         
-        # Search tech review sites directly
+        # Search tech review sites and e-commerce platforms
         tech_sites = [
             self._search_gsmarena(query),
             self._search_techradar(query),
             self._search_pcmag(query),
             self._search_tomsguide(query),
+            self._search_flipkart(query),
             self._search_amazon(query)
         ]
         
@@ -149,12 +150,25 @@ class EnhancedSearchService:
             print(f"Tom's Guide search failed: {e}")
         return []
     
+    def _search_flipkart(self, query: str) -> List[Dict[str, Any]]:
+        """Search Flipkart for product listings"""
+        try:
+            return [{
+                'title': f"{query} - Flipkart Product Listing",
+                'snippet': f"Product details, pricing, customer reviews and ratings for {query} on Flipkart",
+                'link': f"https://www.flipkart.com/search?q={urllib.parse.quote(query)}",
+                'source': 'Flipkart'
+            }]
+        except Exception as e:
+            print(f"Flipkart search failed: {e}")
+        return []
+    
     def _search_amazon(self, query: str) -> List[Dict[str, Any]]:
         """Search Amazon for product listings"""
         try:
             return [{
                 'title': f"{query} - Amazon Product Listing",
-                'snippet': f"Product details, pricing, and customer reviews for {query}",
+                'snippet': f"Product details, pricing, customer reviews and ratings for {query} on Amazon",
                 'link': f"https://www.amazon.com/s?k={urllib.parse.quote(query)}",
                 'source': 'Amazon'
             }]

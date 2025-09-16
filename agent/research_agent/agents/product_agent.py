@@ -4,6 +4,7 @@ from ..search_service import SearchService
 from ..llm_service import LLMService
 from ..scraper_service import ScraperService
 from ..youtube_service import YouTubeService
+from ..ecommerce_service import EcommerceService
 from ..langchain_service import LangChainService
 import time
 
@@ -13,6 +14,7 @@ class ProductAgent(Agent):
         self.llm_service = llm_service
         self.scraper = ScraperService()
         self.youtube = YouTubeService()
+        self.ecommerce = EcommerceService()
         self.langchain = LangChainService()
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
@@ -52,6 +54,21 @@ class ProductAgent(Agent):
         
         # Skip Reddit scraping (service removed)
         
+        # Get e-commerce product details
+        print("\nGathering e-commerce product details...")
+        ecommerce_data = self.ecommerce.get_product_details(query)
+        
+        # Print e-commerce data
+        print(f"\n=== E-COMMERCE PRODUCT DATA ===")
+        for platform, data in ecommerce_data.items():
+            if platform != 'summary' and data:
+                print(f"\n{platform.upper()} Details:")
+                print(f"Product: {data.get('product_name', 'N/A')}")
+                print(f"Price: {data.get('price', 'N/A')}")
+                print(f"Rating: {data.get('rating', 'N/A')} ({data.get('review_count', 'N/A')})")
+                print(f"Availability: {data.get('availability', 'N/A')}")
+        print(f"\n=== END E-COMMERCE DATA ===")
+        
         # Scrape actual content from URLs
         print("\nScraping content from search results...")
         urls = [result['link'] for result in search_results if result.get('link')]
@@ -69,7 +86,7 @@ class ProductAgent(Agent):
         # Use LangChain to process and structure all data
         print("\nProcessing data with LangChain...")
         search_context = self.langchain.create_comprehensive_context(
-            search_results, scraped_data, youtube_reviews
+            search_results, scraped_data, youtube_reviews, ecommerce_data
         )
         
         market_analysis_prompt = f"""

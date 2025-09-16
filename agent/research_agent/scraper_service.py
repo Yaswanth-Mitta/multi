@@ -28,28 +28,15 @@ class ScraperService:
                     scraped_data.append(content)
                     print(f"Successfully scraped content from {url}")
                 else:
-                    print(f"No content extracted from {url}, using fallback")
-                    fallback = self._generate_fallback_content(url)
-                    scraped_data.append({
-                        'url': url,
-                        'title': fallback['title'],
-                        'content': fallback['content'],
-                        'scraped': True
-                    })
+                    print(f"No content extracted from {url}, skipping")
+                    continue
                 
                 # Add delay to be respectful
                 time.sleep(random.uniform(0.3, 0.8))
                 
             except Exception as e:
                 print(f"Scraping failed for {url}: {e}")
-                # Always add fallback content for failed scrapes
-                fallback = self._generate_fallback_content(url)
-                scraped_data.append({
-                    'url': url,
-                    'title': fallback['title'],
-                    'content': fallback['content'],
-                    'scraped': True  # Mark as scraped since we have meaningful fallback
-                })
+                continue
         
         return scraped_data
     
@@ -137,50 +124,9 @@ class ScraperService:
             
         except Exception as e:
             print(f"Failed to scrape {url}: {str(e)}")
-            # Generate realistic fallback content based on URL
-            fallback_content = self._generate_fallback_content(url)
-            return {
-                'url': url,
-                'title': fallback_content['title'],
-                'content': fallback_content['content'],
-                'scraped': True  # Mark as scraped since we have meaningful content
-            }
+            return None
     
-    def _generate_fallback_content(self, url: str) -> Dict[str, str]:
-        """Generate realistic fallback content based on URL"""
-        domain = url.split('/')[2] if '/' in url else url
-        
-        # Domain-specific content templates
-        if 'techradar' in domain.lower():
-            return {
-                'title': 'Professional Tech Review - TechRadar Analysis',
-                'content': 'Comprehensive professional review covering design, performance, camera quality, battery life, software experience, and value for money. Expert testing includes benchmark results, real-world usage scenarios, and detailed comparison with competing products. The review provides in-depth analysis of build quality, display performance, processing power, and overall user experience based on extensive hands-on testing.'
-            }
-        elif 'pcmag' in domain.lower():
-            return {
-                'title': 'Expert Product Analysis - PCMag Review',
-                'content': 'Detailed expert analysis featuring laboratory testing, performance benchmarks, and comprehensive feature evaluation. The review covers technical specifications, real-world performance metrics, user interface assessment, and competitive positioning. Professional testing methodology includes standardized benchmarks, battery endurance tests, and extensive feature comparison with market alternatives.'
-            }
-        elif 'tomsguide' in domain.lower():
-            return {
-                'title': 'Complete Buying Guide - Tom\'s Guide Review',
-                'content': 'Thorough buying guide with hands-on testing, performance evaluation, and detailed feature analysis. The review includes pros and cons assessment, target audience recommendations, and comprehensive comparison with similar products. Expert evaluation covers design quality, performance metrics, value proposition, and practical usage recommendations for different user types.'
-            }
-        elif 'gsmarena' in domain.lower():
-            return {
-                'title': 'Technical Specifications - GSMArena Database',
-                'content': 'Complete technical specifications including processor details, memory configuration, camera specifications, display technology, connectivity options, and battery capacity. Detailed hardware analysis covers chipset performance, storage options, network compatibility, sensor specifications, and comprehensive feature comparison with similar devices in the category.'
-            }
-        elif 'amazon' in domain.lower():
-            return {
-                'title': 'Product Listing - Customer Reviews & Pricing',
-                'content': 'Product listing with customer reviews, ratings, pricing information, and availability details. User feedback covers real-world usage experiences, build quality assessment, performance evaluation, and value for money analysis. Customer reviews highlight both positive aspects and potential concerns based on actual ownership experiences.'
-            }
-        else:
-            return {
-                'title': 'Product Review - Professional Analysis',
-                'content': 'Professional product review featuring comprehensive testing, detailed feature analysis, and expert evaluation. The review covers design quality, performance metrics, user experience assessment, and competitive comparison. Expert analysis includes hands-on testing results, real-world usage scenarios, and detailed pros and cons evaluation based on extensive product evaluation.'
-            }
+
     
     def _is_garbled_content(self, text: str) -> bool:
         """Check if content appears to be garbled or encoded incorrectly"""

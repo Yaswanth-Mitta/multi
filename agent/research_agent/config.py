@@ -30,10 +30,11 @@ class Config:
         
         # NewsData API is optional (paid service, currently disabled)
         if not newsdata_key:
-            print("Warning: NEWSDATA_API_KEY not set (news service will be disabled)")
+            print("Info: NEWSDATA_API_KEY not set (news service will be disabled)")
         
+        # Google API is optional (enhanced search service provides fallback)
         if not google_cse_id:
-            print("Error: GOOGLE_CSE_ID environment variable not set")
-            return False
+            print("Info: GOOGLE_CSE_ID not set (using enhanced search fallback)")
         
+        # Always return True - system works without external APIs
         return True
