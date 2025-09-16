@@ -3,6 +3,10 @@ from flask_cors import CORS
 import sys
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 # Add parent directory to path to import research agent
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

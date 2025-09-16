@@ -16,12 +16,12 @@ class LLMService:
         else:
             self.bedrock_client = boto3.client('bedrock-runtime', region_name=aws_region)
     
-    def query_llm(self, prompt: str, model_id: str = 'anthropic.claude-3-5-sonnet-20240620-v1:0') -> str:
+    def query_llm(self, prompt: str, model_id: str = 'anthropic.claude-3-sonnet-20240229-v1:0') -> str:
         """Query Bedrock LLM with the given prompt"""
         # List of fallback models to try
         models_to_try = [
             model_id,
-            'anthropic.claude-3-sonnet-20240229-v1:0',
+            'anthropic.claude-3-5-sonnet-20240620-v1:0',
             'anthropic.claude-v2:1',
             'anthropic.claude-v2'
         ]
