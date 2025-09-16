@@ -17,7 +17,7 @@ except ImportError as e:
     AGENT_AVAILABLE = False
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['*'], allow_headers=['Content-Type'], methods=['GET', 'POST', 'OPTIONS'])
 
 # Global orchestrator instance
 orchestrator = None
@@ -273,45 +273,29 @@ if __name__ == '__main__':
     orchestrator_ready = initialize_orchestrator()
     if orchestrator_ready:
         print("✅ Backend services ready - Full functionality available")
-        print(f"✅ Orchestrator status: {orchestrator is not None}")
     else:
         print("⚠️  Running in demo mode - Limited functionality")
-        print("    • Mock responses will be generated")
-        print("    • No real API calls will be made")
-        print(f"❌ Orchestrator status: {orchestrator is not None}")
     
-    ec2_ip = os.getenv('EC2_PUBLIC_IP', 'your-ec2-ip')
-    print("\n🌐 Will try ports: 8000, 8001, 8002, 8003, 8080")
-    print(f"🌍 EC2 Public IP: http://{ec2_ip}:PORT")
-    print("🏠 Local access: http://localhost:PORT")
-    print("📱 Mobile friendly interface available")
-    print("🔄 Auto-refresh for real-time updates")
-    print("\nPress Ctrl+C to stop the server")
+    # Get EC2 public IP
+    ec2_ip = os.getenv('EC2_PUBLIC_IP')
+    if not ec2_ip:
+        try:
+            import requests
+            ec2_ip = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4', timeout=2).text
+        except:
+            ec2_ip = 'YOUR_EC2_IP'
+    
+    port = 8000
+    print(f"\n🌐 Starting server on 0.0.0.0:{port}")
+    print(f"🌍 External access: http://{ec2_ip}:{port}")
+    print(f"🏠 Local access: http://localhost:{port}")
+    print("\n📋 API Endpoints:")
+    print(f"   • Status: http://{ec2_ip}:{port}/status")
+    print(f"   • Analyze: http://{ec2_ip}:{port}/analyze")
+    print("\n⚠️  Ensure EC2 Security Group allows inbound traffic on port 8000")
     print("=" * 50)
     
-    # Try different ports if 8000 is in use
-    ports_to_try = [8000, 8001, 8002, 8003, 8080]
-    
-    for port in ports_to_try:
-        try:
-            print(f"🔄 Trying to start server on port {port}...")
-            ec2_ip = os.getenv('EC2_PUBLIC_IP', 'your-ec2-ip')
-            print(f"🌐 Backend API will be available at: http://0.0.0.0:{port}")
-            print(f"🌐 Local access: http://localhost:{port}")
-            print(f"🌐 EC2 access: http://{ec2_ip}:{port}")
-            print("=" * 50)
-            app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-            break
-        except OSError as e:
-            if "Address already in use" in str(e):
-                print(f"⚠️  Port {port} is in use, trying next port...")
-                continue
-            else:
-                print(f"❌ Failed to start server on port {port}: {e}")
-                break
-        except Exception as e:
-            print(f"❌ Failed to start server: {e}")
-            break
-    else:
-        print("❌ All ports are in use. Please kill existing processes or use different ports.")
-        print("Run: ./kill-port.sh to free up port 8000")
+    try:
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    except Exception as e:
+        print(f"❌ Failed to start server: {e}")
