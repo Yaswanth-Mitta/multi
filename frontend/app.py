@@ -11,8 +11,9 @@ try:
     from agent.research_agent.orchestrator import AIOrchestrator
     from agent.research_agent.config import Config
     AGENT_AVAILABLE = True
+    print("✅ Research agent modules imported successfully")
 except ImportError as e:
-    print(f"Research agent not available: {e}")
+    print(f"❌ Research agent not available: {e}")
     AGENT_AVAILABLE = False
 
 app = Flask(__name__)
@@ -20,6 +21,81 @@ CORS(app)
 
 # Global orchestrator instance
 orchestrator = None
+
+def generate_demo_response(query):
+    """Generate demo response when orchestrator is not available"""
+    query_lower = query.lower()
+    
+    if any(word in query_lower for word in ['stock', 'tesla', 'nvidia', 'apple']):
+        agent_type = 'NEWS'
+        result = f"""
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                     DEMO MODE - STOCK ANALYSIS                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+📋 QUERY: {query}
+
+📈 DEMO STOCK ANALYSIS:
+This is a demonstration of the stock analysis feature. In full mode, this would show:
+• Real-time stock prices from Yahoo Finance
+• Market trends and technical analysis
+• Investment recommendations
+• Risk assessment and price targets
+
+⚠️  To enable full functionality, configure your environment variables and restart the backend.
+"""
+    elif any(word in query_lower for word in ['pixel', 'iphone', 'samsung', 'review', 'phone']):
+        agent_type = 'PRODUCT'
+        result = f"""
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                     DEMO MODE - PRODUCT ANALYSIS                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+📋 QUERY: {query}
+
+📈 DEMO PRODUCT ANALYSIS:
+This is a demonstration of the product analysis feature. In full mode, this would show:
+• Comprehensive web scraping from review sites
+• YouTube video analysis (10+ reviews)
+• Real-time pricing and availability
+• Detailed pros/cons from multiple sources
+• Purchase recommendations and alternatives
+
+💬 CONVERSATIONAL MODE:
+In full mode, you could ask follow-up questions like:
+• "What about the camera quality?"
+• "How's the battery life?"
+• "What colors are available?"
+
+⚠️  To enable full functionality, configure your environment variables and restart the backend.
+"""
+    else:
+        agent_type = 'GENERAL'
+        result = f"""
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                     DEMO MODE - GENERAL ANALYSIS                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+📋 QUERY: {query}
+
+📈 DEMO GENERAL ANALYSIS:
+This is a demonstration of the general analysis feature. In full mode, this would provide:
+• Comprehensive research and analysis
+• Multi-source data aggregation
+• AI-powered insights and recommendations
+• Contextual information and trends
+
+⚠️  To enable full functionality, configure your environment variables and restart the backend.
+"""
+    
+    return {
+        'result': result,
+        'agent': agent_type,
+        'timestamp': datetime.now().isoformat(),
+        'session': None,
+        'query': query,
+        'demo_mode': True
+    }
 
 def initialize_orchestrator():
     """Initialize the AI orchestrator"""
@@ -109,8 +185,10 @@ def analyze_query():
             return jsonify({'error': 'Query is required'}), 400
         
         if not orchestrator:
-            print("❌ Orchestrator not initialized")
-            return jsonify({'error': 'Orchestrator not initialized'}), 500
+            print("⚠️  Orchestrator not initialized, using demo mode")
+            # Generate demo response
+            demo_result = generate_demo_response(query)
+            return jsonify(demo_result)
         
         print(f"🔄 Processing query with orchestrator...")
         # Process the query
@@ -181,10 +259,13 @@ if __name__ == '__main__':
     print("=" * 50)
     
     # Initialize orchestrator
-    if initialize_orchestrator():
-        print("✅ Backend services ready")
+    orchestrator_ready = initialize_orchestrator()
+    if orchestrator_ready:
+        print("✅ Backend services ready - Full functionality available")
     else:
-        print("⚠️  Running in limited mode (some features may not work)")
+        print("⚠️  Running in demo mode - Limited functionality")
+        print("    • Mock responses will be generated")
+        print("    • No real API calls will be made")
     
     print("\n🌐 Web Interface: http://localhost:8000")
     print("📱 Mobile friendly interface available")
@@ -192,4 +273,8 @@ if __name__ == '__main__':
     print("\nPress Ctrl+C to stop the server")
     print("=" * 50)
     
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    try:
+        app.run(host='0.0.0.0', port=8000, debug=False)
+    except Exception as e:
+        print(f"❌ Failed to start server: {e}")
+        print("Make sure port 8000 is not in use by another application")
