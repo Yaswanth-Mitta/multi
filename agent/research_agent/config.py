@@ -8,7 +8,7 @@ class Config:
     
     @staticmethod
     def get_aws_region() -> str:
-        return os.getenv('AWS_REGION', 'us-east-1')
+        return os.getenv('AWS_REGION') or os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
     
     @staticmethod
     def get_aws_access_key() -> Optional[str]:

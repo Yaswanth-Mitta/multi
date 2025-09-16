@@ -276,14 +276,8 @@ if __name__ == '__main__':
     else:
         print("⚠️  Running in demo mode - Limited functionality")
     
-    # Get EC2 public IP
-    ec2_ip = os.getenv('EC2_PUBLIC_IP')
-    if not ec2_ip:
-        try:
-            import requests
-            ec2_ip = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4', timeout=2).text
-        except:
-            ec2_ip = 'YOUR_EC2_IP'
+    # Use fixed EC2 IP
+    ec2_ip = '34.224.101.80'
     
     port = 8000
     print(f"\n🌐 Starting server on 0.0.0.0:{port}")
