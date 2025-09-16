@@ -10,13 +10,22 @@ class EcommerceService:
     def __init__(self):
         self.session = requests.Session()
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0'
         }
         self.session.headers.update(self.headers)
+        # Disable SSL verification to avoid connection issues
+        self.session.verify = False
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
     def get_product_details(self, query: str) -> Dict[str, Any]:
         """Get comprehensive product details from multiple e-commerce sites"""
@@ -30,31 +39,64 @@ class EcommerceService:
     def _get_flipkart_details(self, query: str) -> Dict[str, Any]:
         """Extract real product details from Flipkart"""
         try:
-            search_url = f"https://www.flipkart.com/search?q={urllib.parse.quote(query)}"
-            response = self.session.get(search_url, timeout=10)
+            # Clean query for better search
+            clean_query = query.replace(' review', '').replace(' analysis', '').strip()
+            search_url = f"https://www.flipkart.com/search?q={urllib.parse.quote(clean_query)}"
+            
+            # Add Flipkart-specific headers
+            headers = self.headers.copy()
+            headers.update({
+                'Referer': 'https://www.flipkart.com/',
+                'Host': 'www.flipkart.com'
+            })
+            
+            response = self.session.get(search_url, headers=headers, timeout=20)
             
             if response.status_code == 200:
-                return self._parse_flipkart_response(response.text, query)
+                result = self._parse_flipkart_response(response.text, clean_query)
+                if result:
+                    print(f"✅ Flipkart: Found {result['product_name']} - {result['price']}")
+                    return result
+                else:
+                    print("⚠️ Flipkart: No products found in search results")
+                    return None
             else:
-                print(f"Flipkart returned status code: {response.status_code}")
+                print(f"❌ Flipkart returned status code: {response.status_code}")
                 return None
         except Exception as e:
-            print(f"Flipkart scraping failed: {e}")
+            print(f"❌ Flipkart scraping failed: {str(e)[:100]}")
             return None
     
     def _get_amazon_details(self, query: str) -> Dict[str, Any]:
         """Extract real product details from Amazon"""
         try:
-            search_url = f"https://www.amazon.in/s?k={urllib.parse.quote(query)}"
-            response = self.session.get(search_url, timeout=10)
+            # Clean query for better search
+            clean_query = query.replace(' review', '').replace(' analysis', '').strip()
+            search_url = f"https://www.amazon.in/s?k={urllib.parse.quote(clean_query)}&ref=sr_pg_1"
+            
+            # Add Amazon-specific headers
+            headers = self.headers.copy()
+            headers.update({
+                'Referer': 'https://www.amazon.in/',
+                'Host': 'www.amazon.in',
+                'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8'
+            })
+            
+            response = self.session.get(search_url, headers=headers, timeout=20)
             
             if response.status_code == 200:
-                return self._parse_amazon_response(response.text, query)
+                result = self._parse_amazon_response(response.text, clean_query)
+                if result:
+                    print(f"✅ Amazon: Found {result['product_name']} - {result['price']}")
+                    return result
+                else:
+                    print("⚠️ Amazon: No products found in search results")
+                    return None
             else:
-                print(f"Amazon returned status code: {response.status_code}")
+                print(f"❌ Amazon returned status code: {response.status_code}")
                 return None
         except Exception as e:
-            print(f"Amazon scraping failed: {e}")
+            print(f"❌ Amazon scraping failed: {str(e)[:100]}")
             return None
     
     def _generate_flipkart_data(self, query: str) -> Dict[str, Any]:
@@ -229,27 +271,61 @@ class EcommerceService:
         """Parse Flipkart HTML to extract real product data"""
         soup = BeautifulSoup(html, 'html.parser')
         
-        # Find product containers
-        products = soup.find_all('div', {'data-id': True}) or soup.find_all('div', class_='_1AtVbE')
+        # Multiple selectors for Flipkart products
+        product_selectors = [
+            'div[data-id]',
+            '._1AtVbE',
+            '._13oc-S',
+            '._2kHMtA',
+            '.s1Q9rs',
+            '._1fQZEK'
+        ]
         
-        if products:
-            product = products[0]
+        product = None
+        for selector in product_selectors:
+            products = soup.select(selector)
+            if products:
+                product = products[0]
+                break
+        
+        if product:
+            # Extract product name with multiple selectors
+            name_selectors = ['._4rR01T', '.IRpwTa', '.s1Q9rs', '._2WkVRV', '.KzDlHZ']
+            product_name = query
+            for selector in name_selectors:
+                name_elem = product.select_one(selector)
+                if name_elem and name_elem.get_text().strip():
+                    product_name = name_elem.get_text().strip()
+                    break
             
-            # Extract product name
-            name_elem = product.find('div', class_='_4rR01T') or product.find('a', class_='IRpwTa')
-            product_name = name_elem.get_text().strip() if name_elem else query
+            # Extract price with multiple selectors
+            price_selectors = ['._30jeq3', '._1_WHN1', '.Nx9bqj', '._2B099V', '._25b18c']
+            price = 'Price not available'
+            for selector in price_selectors:
+                price_elem = product.select_one(selector)
+                if price_elem and price_elem.get_text().strip():
+                    price_text = price_elem.get_text().strip()
+                    if '₹' in price_text or any(c.isdigit() for c in price_text):
+                        price = price_text
+                        break
             
-            # Extract price
-            price_elem = product.find('div', class_='_30jeq3') or product.find('div', class_='_1_WHN1')
-            price = price_elem.get_text().strip() if price_elem else 'Price not available'
-            
-            # Extract rating
-            rating_elem = product.find('div', class_='_3LWZlK') or product.find('div', class_='gUuXy-')
-            rating = rating_elem.get_text().strip() if rating_elem else 'No rating'
+            # Extract rating with multiple selectors
+            rating_selectors = ['._3LWZlK', '.gUuXy-', '._2d4LTz', '.XQDdHH']
+            rating = 'No rating'
+            for selector in rating_selectors:
+                rating_elem = product.select_one(selector)
+                if rating_elem and rating_elem.get_text().strip():
+                    rating = rating_elem.get_text().strip()
+                    break
             
             # Extract review count
-            review_elem = product.find('span', class_='_2_R_DZ')
-            review_count = review_elem.get_text().strip() if review_elem else 'No reviews'
+            review_selectors = ['._2_R_DZ', '.Wphh3N', '._38sUEc']
+            review_count = 'No reviews'
+            for selector in review_selectors:
+                review_elem = product.select_one(selector)
+                if review_elem and review_elem.get_text().strip():
+                    review_count = review_elem.get_text().strip()
+                    break
             
             return {
                 'platform': 'Flipkart',
@@ -267,31 +343,86 @@ class EcommerceService:
         """Parse Amazon HTML to extract real product data"""
         soup = BeautifulSoup(html, 'html.parser')
         
-        # Find product containers
-        products = soup.find_all('div', {'data-component-type': 's-search-result'}) or soup.find_all('div', class_='s-result-item')
+        # Multiple selectors for Amazon products
+        product_selectors = [
+            'div[data-component-type="s-search-result"]',
+            '.s-result-item',
+            '.sg-col-inner',
+            '[data-asin]',
+            '.s-card-container'
+        ]
         
-        if products:
-            product = products[0]
+        product = None
+        for selector in product_selectors:
+            products = soup.select(selector)
+            if products:
+                product = products[0]
+                break
+        
+        if product:
+            # Extract product name with multiple selectors
+            name_selectors = [
+                'h2 a span',
+                '.a-size-medium',
+                '.a-size-base-plus',
+                'h2.a-size-mini span',
+                '.s-size-mini',
+                '[data-cy="title-recipe-label"]'
+            ]
+            product_name = query
+            for selector in name_selectors:
+                name_elem = product.select_one(selector)
+                if name_elem and name_elem.get_text().strip():
+                    product_name = name_elem.get_text().strip()
+                    break
             
-            # Extract product name
-            name_elem = product.find('h2', class_='a-size-mini') or product.find('span', class_='a-size-medium')
-            if name_elem:
-                name_link = name_elem.find('a')
-                product_name = name_link.get_text().strip() if name_link else name_elem.get_text().strip()
-            else:
-                product_name = query
+            # Extract price with multiple selectors
+            price_selectors = [
+                '.a-price-whole',
+                '.a-price .a-offscreen',
+                '.a-price-range .a-price .a-offscreen',
+                '.a-price-symbol',
+                '.a-price'
+            ]
+            price = 'Price not available'
+            for selector in price_selectors:
+                price_elem = product.select_one(selector)
+                if price_elem:
+                    price_text = price_elem.get_text().strip()
+                    if '₹' in price_text or any(c.isdigit() for c in price_text):
+                        price = price_text
+                        break
             
-            # Extract price
-            price_elem = product.find('span', class_='a-price-whole') or product.find('span', class_='a-price')
-            price = price_elem.get_text().strip() if price_elem else 'Price not available'
-            
-            # Extract rating
-            rating_elem = product.find('span', class_='a-icon-alt')
-            rating = rating_elem.get('aria-label', 'No rating') if rating_elem else 'No rating'
+            # Extract rating with multiple selectors
+            rating_selectors = [
+                '.a-icon-alt',
+                '.a-star-mini .a-icon-alt',
+                'span[aria-label*="stars"]',
+                '.a-declarative .a-icon-alt'
+            ]
+            rating = 'No rating'
+            for selector in rating_selectors:
+                rating_elem = product.select_one(selector)
+                if rating_elem:
+                    rating_text = rating_elem.get('aria-label', '') or rating_elem.get_text().strip()
+                    if 'star' in rating_text.lower() or any(c.isdigit() for c in rating_text):
+                        rating = rating_text
+                        break
             
             # Extract review count
-            review_elem = product.find('a', class_='a-link-normal')
-            review_count = review_elem.get_text().strip() if review_elem and review_elem.get_text().strip().replace(',', '').isdigit() else 'No reviews'
+            review_selectors = [
+                '.a-size-base',
+                'a[href*="#customerReviews"]',
+                '.a-link-normal[href*="reviews"]'
+            ]
+            review_count = 'No reviews'
+            for selector in review_selectors:
+                review_elem = product.select_one(selector)
+                if review_elem:
+                    review_text = review_elem.get_text().strip()
+                    if any(c.isdigit() for c in review_text) and len(review_text) < 50:
+                        review_count = review_text
+                        break
             
             return {
                 'platform': 'Amazon',
