@@ -28,22 +28,34 @@ class EcommerceService:
         return product_data
     
     def _get_flipkart_details(self, query: str) -> Dict[str, Any]:
-        """Extract product details from Flipkart"""
+        """Extract real product details from Flipkart"""
         try:
-            # Generate realistic Flipkart product data
-            return self._generate_flipkart_data(query)
+            search_url = f"https://www.flipkart.com/search?q={urllib.parse.quote(query)}"
+            response = self.session.get(search_url, timeout=10)
+            
+            if response.status_code == 200:
+                return self._parse_flipkart_response(response.text, query)
+            else:
+                print(f"Flipkart returned status code: {response.status_code}")
+                return None
         except Exception as e:
             print(f"Flipkart scraping failed: {e}")
-            return self._generate_flipkart_data(query)
+            return None
     
     def _get_amazon_details(self, query: str) -> Dict[str, Any]:
-        """Extract product details from Amazon"""
+        """Extract real product details from Amazon"""
         try:
-            # Generate realistic Amazon product data
-            return self._generate_amazon_data(query)
+            search_url = f"https://www.amazon.in/s?k={urllib.parse.quote(query)}"
+            response = self.session.get(search_url, timeout=10)
+            
+            if response.status_code == 200:
+                return self._parse_amazon_response(response.text, query)
+            else:
+                print(f"Amazon returned status code: {response.status_code}")
+                return None
         except Exception as e:
             print(f"Amazon scraping failed: {e}")
-            return self._generate_amazon_data(query)
+            return None
     
     def _generate_flipkart_data(self, query: str) -> Dict[str, Any]:
         """Generate realistic Flipkart product data"""
@@ -212,6 +224,86 @@ class EcommerceService:
             })
         
         return reviews
+    
+    def _parse_flipkart_response(self, html: str, query: str) -> Dict[str, Any]:
+        """Parse Flipkart HTML to extract real product data"""
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # Find product containers
+        products = soup.find_all('div', {'data-id': True}) or soup.find_all('div', class_='_1AtVbE')
+        
+        if products:
+            product = products[0]
+            
+            # Extract product name
+            name_elem = product.find('div', class_='_4rR01T') or product.find('a', class_='IRpwTa')
+            product_name = name_elem.get_text().strip() if name_elem else query
+            
+            # Extract price
+            price_elem = product.find('div', class_='_30jeq3') or product.find('div', class_='_1_WHN1')
+            price = price_elem.get_text().strip() if price_elem else 'Price not available'
+            
+            # Extract rating
+            rating_elem = product.find('div', class_='_3LWZlK') or product.find('div', class_='gUuXy-')
+            rating = rating_elem.get_text().strip() if rating_elem else 'No rating'
+            
+            # Extract review count
+            review_elem = product.find('span', class_='_2_R_DZ')
+            review_count = review_elem.get_text().strip() if review_elem else 'No reviews'
+            
+            return {
+                'platform': 'Flipkart',
+                'product_name': product_name,
+                'price': price,
+                'rating': rating,
+                'review_count': review_count,
+                'availability': 'Available on Flipkart',
+                'url': f"https://www.flipkart.com/search?q={urllib.parse.quote(query)}"
+            }
+        
+        return None
+    
+    def _parse_amazon_response(self, html: str, query: str) -> Dict[str, Any]:
+        """Parse Amazon HTML to extract real product data"""
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # Find product containers
+        products = soup.find_all('div', {'data-component-type': 's-search-result'}) or soup.find_all('div', class_='s-result-item')
+        
+        if products:
+            product = products[0]
+            
+            # Extract product name
+            name_elem = product.find('h2', class_='a-size-mini') or product.find('span', class_='a-size-medium')
+            if name_elem:
+                name_link = name_elem.find('a')
+                product_name = name_link.get_text().strip() if name_link else name_elem.get_text().strip()
+            else:
+                product_name = query
+            
+            # Extract price
+            price_elem = product.find('span', class_='a-price-whole') or product.find('span', class_='a-price')
+            price = price_elem.get_text().strip() if price_elem else 'Price not available'
+            
+            # Extract rating
+            rating_elem = product.find('span', class_='a-icon-alt')
+            rating = rating_elem.get('aria-label', 'No rating') if rating_elem else 'No rating'
+            
+            # Extract review count
+            review_elem = product.find('a', class_='a-link-normal')
+            review_count = review_elem.get_text().strip() if review_elem and review_elem.get_text().strip().replace(',', '').isdigit() else 'No reviews'
+            
+            return {
+                'platform': 'Amazon',
+                'product_name': product_name,
+                'price': price,
+                'rating': rating,
+                'review_count': review_count,
+                'availability': 'Available on Amazon',
+                'url': f"https://www.amazon.in/s?k={urllib.parse.quote(query)}"
+            }
+        
+        return None
     
     def _generate_product_summary(self, query: str) -> Dict[str, Any]:
         """Generate comprehensive product summary"""
