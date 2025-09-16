@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting AI Research Orchestrator - Full Stack"
+echo "🚀 Starting AI Research Orchestrator - Web Interface"
 echo "=================================================="
 
 # Check if virtual environment exists
@@ -23,13 +23,9 @@ pip install -r frontend/requirements.txt
 cleanup() {
     echo ""
     echo "🛑 Shutting down services..."
-    if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null
-        echo "✅ Backend stopped"
-    fi
     if [ ! -z "$FRONTEND_PID" ]; then
         kill $FRONTEND_PID 2>/dev/null
-        echo "✅ Frontend stopped"
+        echo "✅ Web interface stopped"
     fi
     echo "👋 Goodbye!"
     exit 0
@@ -38,36 +34,27 @@ cleanup() {
 # Set trap to cleanup on exit
 trap cleanup SIGINT SIGTERM
 
-# Start backend in background
+# Start only the web frontend (it includes the backend functionality)
 echo ""
-echo "🔄 Starting Backend (Console Mode)..."
-python main.py &
-BACKEND_PID=$!
-echo "✅ Backend started (PID: $BACKEND_PID)"
-
-# Wait a moment for backend to initialize
-sleep 2
-
-# Start frontend in background
-echo ""
-echo "🌐 Starting Frontend (Web Interface)..."
+echo "🌐 Starting Web Interface with Backend Integration..."
 cd frontend
 python app.py &
 FRONTEND_PID=$!
 cd ..
-echo "✅ Frontend started (PID: $FRONTEND_PID)"
+echo "✅ Web interface started (PID: $FRONTEND_PID)"
+echo "    Backend functionality integrated into web server"
 
 echo ""
 echo "🎉 All services are running!"
 echo "=================================================="
-echo "🖥️  Console Interface: Check terminal above"
 echo "🌐 Web Interface: http://localhost:8000"
 echo "📱 Mobile friendly UI available"
+echo "🤖 Full AI agent functionality available"
 echo ""
 echo "💡 Usage:"
-echo "   • Use console for direct CLI interaction"
-echo "   • Use web browser for modern UI experience"
-echo "   • Both interfaces share the same backend"
+echo "   • Open http://localhost:8000 in your browser"
+echo "   • Use the modern web interface for all features"
+echo "   • All agents and memory features included"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo "=================================================="
