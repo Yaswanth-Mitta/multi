@@ -1,13 +1,21 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
+from .factory import AgentFactory
 from .news_service import NewsService
 from .search_service import SearchService
 from .llm_service import LLMService
+from .memory_service import MemoryService
 
 class AIOrchestrator:
     def __init__(self, newsdata_api_key: str, google_cse_id: str, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
-        self.news_service = NewsService(newsdata_api_key)
-        self.search_service = SearchService(google_cse_id)
-        self.llm_service = LLMService(aws_access_key, aws_secret_key, aws_region)
+        # Initialize services
+        news_service = NewsService(newsdata_api_key)
+        search_service = SearchService(google_cse_id)
+        llm_service = LLMService(aws_access_key, aws_secret_key, aws_region)
+        
+        # Initialize factory with services
+        self.factory = AgentFactory(news_service, search_service, llm_service)
+        self.llm_service = llm_service
+        self.memory = MemoryService()
     
     def classify_query(self, query: str) -> str:
         """Classify query type using LLM"""
@@ -24,6 +32,20 @@ class AIOrchestrator:
         """
         
         classification = self.llm_service.query_llm(classification_prompt).strip().upper()
+        
+        # Fallback if LLM fails or returns empty
+        if not classification or classification not in ["STOCKS", "NEWS", "PRODUCT", "GENERAL"]:
+            # Simple keyword-based fallback
+            query_lower = query.lower()
+            if any(word in query_lower for word in ["mobile", "phone", "laptop", "product", "buy", "price", "camera", "display", "snapdragon", "review", "iphone", "samsung", "unboxing"]):
+                classification = "PRODUCT"
+            elif any(word in query_lower for word in ["stock", "market", "trading", "investment", "share", "apple", "tesla", "microsoft", "google", "amazon", "reliance", "tcs", "infosys", "aapl", "tsla", "msft"]):
+                classification = "STOCKS"
+            elif any(word in query_lower for word in ["news", "breaking", "latest"]):
+                classification = "NEWS"
+            else:
+                classification = "GENERAL"
+        
         print(f"\n=== CLASSIFICATION ===")
         print(f"Query: {query}")
         print(f"Classified as: {classification}")
@@ -41,165 +63,135 @@ class AIOrchestrator:
         else:
             return query
     
+    def get_memory_status(self) -> str:
+        """Get current memory status"""
+        if self.memory.has_active_session():
+            session = self.memory.get_session_info()
+            return f"Active session: {session['product']} ({len(self.memory.conversation_history)} exchanges)"
+        return "No active session"
+    
     def analyze_query(self, user_query: str) -> str:
-        """Main orchestration method"""
+        """Main orchestration method with conversational memory"""
         print(f"Processing query: {user_query}")
         
-        # Step 1: Classify the query
-        category = self.classify_query(user_query)
-        
-        # Step 2: Route to appropriate service
-        if category in ["STOCKS", "NEWS"]:
-            return self._handle_news_query(user_query, category)
-        elif category == "PRODUCT":
-            return self._handle_product_query(user_query)
-        else:
-            return self._handle_general_query(user_query)
+        try:
+            # Check if this is a follow-up question to existing research
+            if self.memory.has_active_session() and not self._is_new_research_query(user_query):
+                print(f"🔄 Detected follow-up question about {self.memory.current_session['product']}")
+                return self._handle_followup_query(user_query)
+            
+            # Clear memory if starting new research
+            if self.memory.has_active_session():
+                print(f"🔄 Starting new research, clearing previous session")
+                self.memory.clear_session()
+            
+            # Step 1: Classify the query for new research
+            category = self.classify_query(user_query)
+            print(f"🏭 Getting agent for category: {category}")
+            
+            # Step 2: Get appropriate agent from factory
+            agent = self.factory.get_agent(category)
+            print(f"🤖 Got agent: {type(agent).__name__}")
+            
+            # Step 3: Process query with agent (full research)
+            context = {'category': category, 'memory': self.memory}
+            print(f"📤 Calling agent.process with context: {context}")
+            result = agent.process(user_query, context)
+            print(f"📥 Agent returned result length: {len(result)}")
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error in orchestration: {e}")
+            import traceback
+            traceback.print_exc()
+            return f"Error processing query: {str(e)}"
     
-    def _handle_news_query(self, query: str, category: str) -> str:
-        """Handle stocks/news queries with real-time data"""
-        optimized_query = self.create_optimized_prompt(query, category)
-        news_results = self.news_service.search_news(optimized_query)
+    def _is_new_research_query(self, query: str) -> bool:
+        """Determine if this is a new research query or follow-up"""
+        query_lower = query.lower()
         
-        if not news_results:
-            return "No real-time data found for the query."
+        # Keywords that clearly indicate follow-up questions
+        followup_keywords = [
+            'camera', 'battery', 'price', 'color', 'colors', 'screen', 'display', 
+            'performance', 'storage', 'memory', 'size', 'weight', 'features',
+            'what', 'how', 'when', 'where', 'why', 'is it', 'does it', 'can it',
+            'details', 'detail', 'about', 'specs', 'specification', 'tell me',
+            'more about', 'explain', 'describe', 'show me', 'good', 'bad',
+            'pros', 'cons', 'worth', 'buy', 'purchase', 'recommend'
+        ]
         
-        news_context = "\n".join([
-            f"Title: {article['title']}\nDescription: {article['description']}\nSource: {article['source_id']}\nDate: {article['pubDate']}\n"
-            for article in news_results[:3]
-        ])
+        # Short queries are likely follow-ups
+        if len(query.split()) <= 3:
+            return False
         
-        print(f"\n=== NEWS DATA RETRIEVED ===")
-        for i, article in enumerate(news_results[:3], 1):
-            print(f"\nArticle {i}:")
-            print(f"Title: {article['title']}")
-            print(f"Description: {article['description'][:200]}...")
-            print(f"Source: {article['source_id']}")
-            print(f"Date: {article['pubDate']}")
-        print(f"\n=== END NEWS DATA ===")
+        # If it's clearly a follow-up question
+        if any(keyword in query_lower for keyword in followup_keywords):
+            return False
         
-        analysis_prompt = f"""
-        Based on real-time news data about "{query}", provide analysis:
+        # Keywords that indicate new research
+        new_research_keywords = ['review of', 'analysis of', 'compare', 'vs', 'versus']
         
-        News Data:
-        {news_context}
+        # If query contains completely different product names
+        if self.memory.current_session:
+            current_product = self.memory.current_session['product'].lower()
+            # Check if query mentions a completely different product
+            product_brands = ['iphone', 'samsung', 'oneplus', 'xiaomi', 'huawei', 'sony', 'lg', 'pixel', 'galaxy']
+            mentioned_products = [p for p in product_brands if p in query_lower]
+            current_products = [p for p in product_brands if p in current_product]
+            
+            if mentioned_products and current_products and not any(p in current_products for p in mentioned_products):
+                return True
         
-        Provide:
-        1. Current market sentiment/trends
-        2. Key developments and impact
-        3. Risk assessment
-        4. Actionable insights
+        # If it contains explicit new research keywords
+        return any(keyword in query_lower for keyword in new_research_keywords)
+    
+    def _handle_followup_query(self, query: str) -> str:
+        """Handle follow-up questions using cached research data"""
+        print(f"💬 Conversational Mode: Answering follow-up about {self.memory.current_session['product']}")
+        
+        # Get research context from memory
+        research_context = self.memory.get_research_context()
+        
+        # Create focused prompt for follow-up
+        followup_prompt = f"""
+        You are a product expert answering a follow-up question about {self.memory.current_session['product']}.
+        
+        USER QUESTION: {query}
+        
+        AVAILABLE RESEARCH DATA:
+        {research_context}
+        
+        INSTRUCTIONS:
+        - Answer the specific question using the research data provided
+        - Be detailed and informative while staying focused on the question
+        - Reference specific details from reviews, specs, or user feedback when relevant
+        - If the exact information isn't in the data, provide the closest relevant information
+        - Use a conversational, helpful tone
+        - Structure your response clearly with bullet points if needed
         """
         
-        print("Analyzing with real-time news data...")
-        analysis = self.llm_service.query_llm(analysis_prompt)
+        response = self.llm_service.query_llm(followup_prompt)
+        
+        # Add to conversation history
+        self.memory.add_conversation(query, response)
         
         return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                        REAL-TIME NEWS ANALYSIS                               ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ 💬 CONVERSATIONAL RESPONSE - {self.memory.current_session['product'].upper():<40} │
+└────────────────────────────────────────────────────────────────────────────────┘
 
-📋 QUERY: {query}
-🏷️  CATEGORY: {category}
+{response}
 
-📰 REAL-TIME DATA ANALYSIS:
-{analysis}
-
-═══════════════════════════════════════════════════════════════════════════════
-Based on {len(news_results)} recent articles | NewsData.io + AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
+💡 Continue asking questions about {self.memory.current_session['product']} or type 'exit' for new research.
         """.strip()
     
-    def _handle_product_query(self, query: str) -> str:
-        """Handle product queries with search data"""
-        search_results = self.search_service.search_products(query)
-        
-        if not search_results:
-            return "No product data found for the query."
-        
-        search_context = "\n".join([
-            f"Title: {result['title']}\nSnippet: {result['snippet']}\n"
-            for result in search_results
-        ])
-        
-        print(f"\n=== SEARCH DATA RETRIEVED ===")
-        for i, result in enumerate(search_results, 1):
-            print(f"\nResult {i}:")
-            print(f"Title: {result['title']}")
-            print(f"Snippet: {result['snippet'][:150]}...")
-            print(f"Link: {result['link']}")
-        print(f"\n=== END SEARCH DATA ===")
-        
-        market_analysis_prompt = f"""
-        Based on product search data for "{query}":
-        
-        Search Results:
-        {search_context}
-        
-        Provide market analysis:
-        1. Product demand and trends
-        2. Pricing analysis
-        3. Consumer preferences
-        4. Market opportunities
-        """
-        
-        purchase_prompt = f"""
-        Product: "{query}"
-        
-        Provide purchase assessment:
-        1. Purchase likelihood (0-100%)
-        2. Key buying factors
-        3. Target audience
-        4. Recommendations
-        """
-        
-        print("Analyzing product market data...")
-        market_analysis = self.llm_service.query_llm(market_analysis_prompt)
-        
-        print("Generating purchase assessment...")
-        purchase_analysis = self.llm_service.query_llm(purchase_prompt)
-        
-        return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                        PRODUCT MARKET ANALYSIS                               ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-📋 QUERY: {query}
-🏷️  CATEGORY: PRODUCT
-
-📊 MARKET ANALYSIS:
-{market_analysis}
-
-🎯 PURCHASE ASSESSMENT:
-{purchase_analysis}
-
-═══════════════════════════════════════════════════════════════════════════════
-Product Analysis | Search Data + AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
-        """.strip()
+    def clear_memory(self):
+        """Clear conversation memory"""
+        self.memory.clear_session()
     
-    def _handle_general_query(self, query: str) -> str:
-        """Handle general queries"""
-        general_prompt = f"""
-        Provide a comprehensive analysis for: "{query}"
-        
-        Include relevant insights, recommendations, and actionable information.
-        """
-        
-        print("Processing general query...")
-        analysis = self.llm_service.query_llm(general_prompt)
-        
-        return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                           GENERAL ANALYSIS                                   ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-📋 QUERY: {query}
-
-📝 ANALYSIS:
-{analysis}
-
-═══════════════════════════════════════════════════════════════════════════════
-General Analysis | AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
-        """.strip()
+    def __del__(self):
+        """Cleanup when orchestrator is destroyed"""
+        if hasattr(self, 'memory'):
+            self.memory.clear_session()
+    

@@ -10,10 +10,13 @@ load_dotenv()
 def main():
     """Main function to run the Research Agent"""
     print("=== AI Research Orchestrator ===")
-    print("Intelligent agent that routes queries to appropriate services:")
-    print("📰 Stocks/News → Real-time NewsData.io API")
-    print("🛍️  Products → Google Search + Market Analysis")
-    print("🤖 All powered by AWS Bedrock LLMs")
+    print("Clean Architecture Multi-Agent LLM System:")
+    print("📰 News/Stocks Agent → Real-time NewsData.io API")
+    print("🛍️  Product Agent → Google Search + Market Analysis")
+    print("🤖 General Agent → Comprehensive Analysis")
+    print("✅ Validator Agent → Information Validation")
+    print("🏭 Factory Pattern → Dynamic Agent Creation")
+    print("🎯 Orchestrator → Centralized Workflow Control")
     print()
     
     # Validate configuration
@@ -44,9 +47,21 @@ def main():
     while True:
         try:
             print("-" * 50)
-            user_input = input("Enter your product/market query (or 'quit' to exit): ").strip()
             
-            if user_input.lower() in ['quit', 'exit', 'q']:
+            # Show memory status
+            memory_status = orchestrator.get_memory_status()
+            if "Active session" in memory_status:
+                print(f"💭 {memory_status}")
+                user_input = input("Ask follow-up question or 'exit' to start fresh: ").strip()
+                
+                if user_input.lower() == 'exit':
+                    orchestrator.clear_memory()
+                    print("🔄 Memory cleared. Starting fresh research.")
+                    continue
+            else:
+                user_input = input("Enter your product/market query (or 'quit' to exit): ").strip()
+            
+            if user_input.lower() in ['quit', 'q']:
                 print("Goodbye!")
                 break
             
@@ -57,7 +72,6 @@ def main():
             print()
             # Process the query
             result = orchestrator.analyze_query(user_input)
-            print()
             print(result)
             print()
             
