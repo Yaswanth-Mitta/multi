@@ -25,14 +25,20 @@ def initialize_orchestrator():
     """Initialize the AI orchestrator"""
     global orchestrator
     
+    print(f"🔄 Initializing orchestrator...")
+    print(f"📝 Agent available: {AGENT_AVAILABLE}")
+    
     if not AGENT_AVAILABLE:
+        print("❌ Agent not available")
         return False
     
     try:
+        print("🔍 Validating configuration...")
         if not Config.validate_config():
-            print("Configuration validation failed")
+            print("❌ Configuration validation failed")
             return False
         
+        print("🏭 Creating orchestrator instance...")
         orchestrator = AIOrchestrator(
             newsdata_api_key=Config.get_newsdata_api_key(),
             google_cse_id=Config.get_google_cse_id(),
@@ -44,6 +50,8 @@ def initialize_orchestrator():
         return True
     except Exception as e:
         print(f"❌ Failed to initialize orchestrator: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @app.route('/')
@@ -91,17 +99,23 @@ def get_status():
 def analyze_query():
     """Analyze user query"""
     try:
+        print(f"📥 Received analyze request")
         data = request.get_json()
         query = data.get('query', '').strip()
+        print(f"📝 Query: {query}")
         
         if not query:
+            print("❌ Empty query received")
             return jsonify({'error': 'Query is required'}), 400
         
         if not orchestrator:
+            print("❌ Orchestrator not initialized")
             return jsonify({'error': 'Orchestrator not initialized'}), 500
         
+        print(f"🔄 Processing query with orchestrator...")
         # Process the query
         result = orchestrator.analyze_query(query)
+        print(f"✅ Got result, length: {len(result)}")
         
         # Get memory status
         memory_status = orchestrator.get_memory_status()
@@ -122,16 +136,20 @@ def analyze_query():
         elif 'GENERAL ANALYSIS' in result:
             agent_type = 'GENERAL'
         
-        return jsonify({
+        response_data = {
             'result': result,
             'agent': agent_type,
             'timestamp': datetime.now().isoformat(),
             'session': session_info,
             'query': query
-        })
+        }
+        print(f"📤 Sending response: agent={agent_type}, session={session_info}")
+        return jsonify(response_data)
         
     except Exception as e:
-        print(f"Error processing query: {e}")
+        print(f"❌ Error processing query: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Processing failed: {str(e)}'}), 500
 
 @app.route('/clear-memory', methods=['POST'])
