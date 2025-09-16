@@ -4,25 +4,61 @@ import os
 from typing import Dict, List, Any
 from .enhanced_search_service import EnhancedSearchService
 
+try:
+    from tavily import TavilyClient
+    TAVILY_AVAILABLE = True
+except ImportError:
+    TavilyClient = None
+    TAVILY_AVAILABLE = False
+
 class SearchService:
     def __init__(self, google_cse_id: str):
         self.google_cse_id = google_cse_id
         self.google_api_key = os.getenv('GOOGLE_API_KEY')
+        self.tavily_api_key = os.getenv('TAVILY_API_KEY')
         self.base_url = "https://www.googleapis.com/customsearch/v1"
         self.enhanced_search = EnhancedSearchService()
+        
+        # Initialize Tavily client if available
+        if TAVILY_AVAILABLE and self.tavily_api_key:
+            self.tavily_client = TavilyClient(api_key=self.tavily_api_key)
+        else:
+            self.tavily_client = None
     
     def search_products(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
-        """Search for product information using enhanced multi-source search"""
+        """Search for product information using Tavily or enhanced search"""
         print(f"Searching products for: {query}")
-        print("Using enhanced multi-source search (no API keys required)")
         
-        # Use enhanced search (works without API keys)
+        # Try Tavily first if available
+        if self.tavily_client:
+            print("Using Tavily AI search")
+            try:
+                response = self.tavily_client.search(
+                    query=f"{query} review specifications price",
+                    search_depth="advanced",
+                    max_results=num_results,
+                    include_domains=["techradar.com", "pcmag.com", "gsmarena.com", "flipkart.com", "amazon.in"]
+                )
+                
+                results = []
+                for result in response.get('results', []):
+                    results.append({
+                        'title': result.get('title', ''),
+                        'snippet': result.get('content', '')[:200] + '...',
+                        'link': result.get('url', ''),
+                        'source': 'Tavily'
+                    })
+                
+                if results:
+                    return results
+                    
+            except Exception as e:
+                print(f"Tavily search failed: {e}")
+        
+        print("Using enhanced multi-source search (fallback)")
+        # Fallback to enhanced search
         search_results = self.enhanced_search.search_multiple_sources(query, num_results)
-        
-        # Also get official website results
         official_results = self.enhanced_search.search_official_websites(query)
-        
-        # Combine results
         all_results = search_results + official_results
         return all_results[:num_results]
     
