@@ -151,47 +151,80 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
     }
     
     try {
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 1.5,
+      // Wait for content to be fully rendered
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const element = contentRef.current
+      
+      // Ensure element is visible and has content
+      if (!element || element.offsetHeight === 0) {
+        throw new Error('Content element is not visible or has no height')
+      }
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
-        logging: false,
-        width: contentRef.current.scrollWidth,
-        height: contentRef.current.scrollHeight
+        logging: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       })
       
-      const imgData = canvas.toDataURL('image/png', 0.8)
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas has no dimensions')
+      }
+      
+      const imgData = canvas.toDataURL('image/png', 1.0)
+      
+      if (!imgData || imgData === 'data:,') {
+        throw new Error('Failed to generate image data from canvas')
+      }
+      
       const pdf = new jsPDF('p', 'mm', 'a4')
       
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 60) / imgHeight)
-      const imgX = (pdfWidth - imgWidth * ratio) / 2
-      const imgY = 30
+      const canvasAspectRatio = canvas.height / canvas.width
+      
+      // Calculate dimensions to fit content properly
+      let imgWidth = pdfWidth - 20
+      let imgHeight = imgWidth * canvasAspectRatio
+      
+      // If height exceeds page, scale down
+      if (imgHeight > pdfHeight - 40) {
+        imgHeight = pdfHeight - 40
+        imgWidth = imgHeight / canvasAspectRatio
+      }
+      
+      const imgX = (pdfWidth - imgWidth) / 2
+      const imgY = 20
       
       // Add header
-      pdf.setFontSize(18)
+      pdf.setFontSize(16)
       pdf.setTextColor(59, 130, 246)
-      pdf.text('AI Research Analysis Report', 20, 20)
+      pdf.text('AI Research Analysis Report', 10, 10)
       
-      // Add content
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
+      // Add content image
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth, imgHeight)
       
       // Add footer
       pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
-      pdf.text(`Generated on ${new Date().toLocaleDateString()} | Query: ${results.query}`, 20, pdfHeight - 10)
+      const footerText = `Generated: ${new Date().toLocaleDateString()} | Query: ${results.query.substring(0, 60)}`
+      pdf.text(footerText, 10, pdfHeight - 5)
       
       // Clean filename
-      const filename = `research-analysis-${results.query.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().substring(0, 50)}.pdf`
+      const filename = `analysis-${results.query.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().substring(0, 30)}.pdf`
       pdf.save(filename)
       
     } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Error generating PDF. Please check your browser settings and try again.')
+      console.error('PDF generation error:', error)
+      alert(`PDF generation failed: ${error.message || 'Unknown error'}. Please try again.`)
     } finally {
       // Reset button state
       if (button) {
@@ -202,7 +235,8 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
   }
   
   return (
-    <div ref={contentRef} className="space-y-6 animate-fade-in bg-white p-6 rounded-lg">
+    <div className="space-y-6 animate-fade-in">
+      <div ref={contentRef} className="bg-white p-6 rounded-lg shadow-sm border">
       {/* Query Summary with Actions */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
@@ -352,6 +386,7 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
