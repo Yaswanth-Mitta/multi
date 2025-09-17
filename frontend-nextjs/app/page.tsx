@@ -53,7 +53,15 @@ export default function Home() {
 
         <SearchForm onSearch={handleSearch} loading={loading} />
         
-        {results && <ResultsDisplay results={results} />}
+        {results && (
+          <ResultsDisplay 
+            results={results} 
+            onRefresh={() => {
+              setResults(null)
+              setLoading(false)
+            }} 
+          />
+        )}
         
         {!results && <Features />}
       </div>

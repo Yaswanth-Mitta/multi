@@ -3,6 +3,9 @@
 import { Brain, Search, FileText, ExternalLink, TrendingUp, DollarSign, BarChart3 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useRef } from 'react'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 interface ResultsProps {
   results: {
@@ -19,6 +22,7 @@ interface ResultsProps {
       type: string
     }>
   }
+  onRefresh?: () => void
 }
 
 // Function to parse ASCII tables and format them as HTML tables
@@ -114,16 +118,88 @@ const formatTableData = (data: any[]) => {
   return table
 }
 
-export default function ResultsDisplay({ results }: ResultsProps) {
+export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
+  const contentRef = useRef<HTMLDivElement>(null)
   const processedContent = parseASCIIContent(results.marketAnalysis.summary)
   
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh()
+    } else {
+      window.location.reload()
+    }
+  }
+  
+  const handleDownloadPDF = async () => {
+    if (!contentRef.current) return
+    
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      })
+      
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const imgX = (pdfWidth - imgWidth * ratio) / 2
+      const imgY = 30
+      
+      // Add header
+      pdf.setFontSize(20)
+      pdf.setTextColor(59, 130, 246)
+      pdf.text('AI Research Analysis Report', 20, 20)
+      
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
+      
+      // Add footer
+      pdf.setFontSize(10)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, 20, pdfHeight - 10)
+      
+      pdf.save(`research-analysis-${results.query.replace(/\s+/g, '-').toLowerCase()}.pdf`)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF. Please try again.')
+    }
+  }
+  
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Query Summary */}
+    <div ref={contentRef} className="space-y-6 animate-fade-in bg-white p-6 rounded-lg">
+      {/* Query Summary with Actions */}
       <div className="card">
-        <div className="flex items-center space-x-3 mb-4">
-          <Search className="h-6 w-6 text-primary-600" />
-          <h2 className="text-xl font-semibold text-gray-900">Analysis Results</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <Search className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Analysis Results</h2>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Refresh</span>
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Download PDF</span>
+            </button>
+          </div>
         </div>
         <div className="bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 rounded-lg p-4">
           <p className="text-lg text-primary-700 font-medium">{results.query}</p>
@@ -137,7 +213,7 @@ export default function ResultsDisplay({ results }: ResultsProps) {
           <h3 className="text-xl font-semibold text-gray-900">AI Research Analysis</h3>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl p-4 md:p-6 shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
           <div className="prose prose-gray max-w-none break-words">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
