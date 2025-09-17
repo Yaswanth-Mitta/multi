@@ -1,19 +1,10 @@
 #!/bin/bash
-
-echo "🚀 Starting AI Research Agent"
-echo "============================="
-
-# Use your EC2 IP
-PUBLIC_IP="34.224.101.80"
-echo "🌐 Public IP: $PUBLIC_IP"
-
-# Kill existing processes
-pkill -f "python.*app.py" 2>/dev/null || true
-
-# Start application
-echo "🚀 Starting on port 8000..."
-echo "🌐 Access: http://$PUBLIC_IP:8000"
-echo "============================="
-
-cd frontend
-python app.py
+pkill -f "python.*main.py" 2>/dev/null
+pkill -f "npm.*dev" 2>/dev/null
+cd "$(dirname "$0")"
+python main.py &
+sleep 2
+cd frontend-nextjs && npm run dev &
+echo "Backend: http://localhost:8000"
+echo "Frontend: http://localhost:3000"
+wait
