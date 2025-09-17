@@ -44,10 +44,10 @@ export default function Home() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             AI-Powered
-            <span className="text-primary-600 block">Market Research</span>
+            <span className="text-primary-600 block">Research Agent</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Get comprehensive market analysis and purchase likelihood assessments for any product using advanced AI research agents.
+            Get comprehensive product analysis and market insights using advanced AI research agents.
           </p>
         </div>
 

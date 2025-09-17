@@ -6,33 +6,33 @@ export default function Features() {
   const features = [
     {
       icon: Search,
-      title: 'Real-time Data',
-      description: 'Fetches live market data from Google Search API and multiple sources'
+      title: 'Multi-Source Research',
+      description: 'Gathers data from web search, news, and market sources'
     },
     {
       icon: Brain,
-      title: 'AI Analysis',
-      description: 'Uses AWS Bedrock LLMs for comprehensive market analysis'
+      title: 'AI-Powered Analysis',
+      description: 'Advanced AI agents provide comprehensive product insights'
     },
     {
       icon: TrendingUp,
-      title: 'Market Trends',
-      description: 'Identifies current market trends and competitive landscape'
+      title: 'Market Intelligence',
+      description: 'Real-time market trends and competitive analysis'
     },
     {
       icon: Zap,
-      title: 'Fast Results',
-      description: 'Get detailed analysis and insights in seconds'
+      title: 'Instant Results',
+      description: 'Get detailed research reports in seconds'
     },
     {
       icon: Shield,
-      title: 'Reliable Data',
-      description: 'Cross-references multiple sources for accurate insights'
+      title: 'Validated Information',
+      description: 'Cross-verified data from multiple reliable sources'
     },
     {
       icon: Globe,
-      title: 'Global Coverage',
-      description: 'Analyzes markets across different regions and segments'
+      title: 'Comprehensive Coverage',
+      description: 'Global market data and regional insights'
     }
   ]
 

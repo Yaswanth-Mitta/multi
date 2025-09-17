@@ -49,20 +49,15 @@ def research():
         response = {
             'query': query,
             'marketAnalysis': {
-                'summary': result[:500] + '...' if len(result) > 500 else result,
-                'trends': ['AI-powered analysis', 'Market research', 'Data-driven insights'],
-                'competition': 'Analyzed using multiple data sources',
-                'marketSize': 'Comprehensive market evaluation'
-            },
-            'purchaseLikelihood': {
-                'score': 85,
-                'factors': ['Strong market analysis', 'AI-powered insights', 'Real-time data'],
-                'recommendation': 'High confidence in analysis quality'
+                'summary': result,
+                'trends': [],
+                'competition': '',
+                'marketSize': ''
             },
             'sources': [
-                {'title': 'AI Research Analysis', 'url': '#', 'type': 'analysis'},
-                {'title': 'Market Data Sources', 'url': '#', 'type': 'data'},
-                {'title': 'Web Research', 'url': '#', 'type': 'web'}
+                {'title': 'AI Research Analysis', 'url': '#', 'type': 'AI Analysis'},
+                {'title': 'Web Research Data', 'url': '#', 'type': 'Web Scraping'},
+                {'title': 'Market Intelligence', 'url': '#', 'type': 'Market Data'}
             ]
         }
         

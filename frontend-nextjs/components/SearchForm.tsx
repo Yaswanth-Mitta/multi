@@ -19,9 +19,9 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
   }
 
   const exampleQueries = [
-    "mobile with 8gb ram, hd camera at 40000k",
-    "laptop with 16gb ram under 50000",
-    "wireless headphones with noise cancellation"
+    "iPhone 15 Pro review and analysis",
+    "Tesla Model 3 market analysis",
+    "Samsung Galaxy S24 Ultra features"
   ]
 
   return (
@@ -33,7 +33,7 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your product query (e.g., mobile with 8gb ram, hd camera at 40000k)"
+            placeholder="Enter your product query (e.g., iPhone 15 Pro review and analysis)"
             className="input-field pl-12 text-lg"
             disabled={loading}
           />
