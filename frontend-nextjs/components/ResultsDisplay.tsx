@@ -42,28 +42,28 @@ export default function ResultsDisplay({ results }: ResultsProps) {
           <h3 className="text-xl font-semibold text-gray-900">AI Research Analysis</h3>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <div className="prose prose-gray max-w-none">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 shadow-sm overflow-hidden">
+          <div className="prose prose-gray max-w-none break-words">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
-                h1: ({children}) => <h1 className="text-2xl font-bold text-gray-900 mb-4 border-b pb-2">{children}</h1>,
-                h2: ({children}) => <h2 className="text-xl font-semibold text-gray-800 mb-3 mt-6">{children}</h2>,
-                h3: ({children}) => <h3 className="text-lg font-medium text-gray-700 mb-2 mt-4">{children}</h3>,
-                p: ({children}) => <p className="text-gray-700 mb-3 leading-relaxed">{children}</p>,
-                ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1 text-gray-700">{children}</ul>,
-                ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1 text-gray-700">{children}</ol>,
-                li: ({children}) => <li className="mb-1">{children}</li>,
-                strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                em: ({children}) => <em className="italic text-gray-600">{children}</em>,
-                code: ({children}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
-                pre: ({children}) => <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
-                blockquote: ({children}) => <blockquote className="border-l-4 border-primary-500 pl-4 italic text-gray-600 mb-4">{children}</blockquote>,
-                table: ({children}) => <table className="min-w-full border-collapse border border-gray-300 mb-4">{children}</table>,
-                th: ({children}) => <th className="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-left">{children}</th>,
-                td: ({children}) => <td className="border border-gray-300 px-4 py-2">{children}</td>,
+                h1: ({children}) => <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 border-b pb-2 break-words">{children}</h1>,
+                h2: ({children}) => <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 mt-6 break-words">{children}</h2>,
+                h3: ({children}) => <h3 className="text-base md:text-lg font-medium text-gray-700 mb-2 mt-4 break-words">{children}</h3>,
+                p: ({children}) => <p className="text-gray-700 mb-3 leading-relaxed break-words">{children}</p>,
+                ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1 text-gray-700 break-words">{children}</ul>,
+                ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1 text-gray-700 break-words">{children}</ol>,
+                li: ({children}) => <li className="mb-1 break-words">{children}</li>,
+                strong: ({children}) => <strong className="font-semibold text-gray-900 break-words">{children}</strong>,
+                em: ({children}) => <em className="italic text-gray-600 break-words">{children}</em>,
+                code: ({children}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800 break-all">{children}</code>,
+                pre: ({children}) => <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto mb-4 text-sm">{children}</pre>,
+                blockquote: ({children}) => <blockquote className="border-l-4 border-primary-500 pl-4 italic text-gray-600 mb-4 break-words">{children}</blockquote>,
+                table: ({children}) => <div className="overflow-x-auto mb-4"><table className="min-w-full border-collapse border border-gray-300">{children}</table></div>,
+                th: ({children}) => <th className="border border-gray-300 px-2 md:px-4 py-2 bg-gray-50 font-semibold text-left text-sm">{children}</th>,
+                td: ({children}) => <td className="border border-gray-300 px-2 md:px-4 py-2 text-sm break-words">{children}</td>,
                 hr: () => <hr className="my-6 border-gray-300" />,
-                a: ({href, children}) => <a href={href} className="text-primary-600 hover:text-primary-700 underline" target="_blank" rel="noopener noreferrer">{children}</a>
+                a: ({href, children}) => <a href={href} className="text-primary-600 hover:text-primary-700 underline break-words" target="_blank" rel="noopener noreferrer">{children}</a>
               }}
             >
               {results.marketAnalysis.summary}

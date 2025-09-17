@@ -37,10 +37,10 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 max-w-7xl">
       <Header />
       
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto overflow-hidden">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             AI-Powered
