@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Replace this URL with your Python backend endpoint
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
     
     const response = await fetch(`${backendUrl}/research`, {
@@ -31,37 +30,9 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('API Error:', error)
-    
-    // Return mock data for development/demo purposes
-    return NextResponse.json({
-      query: request.body?.query || 'Sample query',
-      marketAnalysis: {
-        summary: "Based on current market trends and competitive analysis, this product shows strong potential in the market with favorable positioning against competitors.",
-        trends: [
-          "Increasing demand for high-performance devices",
-          "Price-conscious consumer behavior",
-          "Growing preference for feature-rich products",
-          "Strong online sales growth"
-        ],
-        competition: "Moderate to high competition with 4-5 major players",
-        marketSize: "$3.2B globally with 15% YoY growth"
-      },
-      purchaseLikelihood: {
-        score: 75,
-        factors: [
-          "Competitive pricing strategy",
-          "Strong feature-to-price ratio",
-          "Positive market sentiment",
-          "Good brand positioning"
-        ],
-        recommendation: "High likelihood of purchase success with proper marketing strategy"
-      },
-      sources: [
-        { title: "Google Search Market Data", url: "#", type: "search" },
-        { title: "Competitive Analysis Report", url: "#", type: "analysis" },
-        { title: "Consumer Sentiment Analysis", url: "#", type: "sentiment" },
-        { title: "Price Comparison Data", url: "#", type: "pricing" }
-      ]
-    })
+    return NextResponse.json(
+      { error: 'Failed to connect to backend' },
+      { status: 500 }
+    )
   }
 }

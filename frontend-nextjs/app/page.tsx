@@ -14,7 +14,6 @@ export default function Home() {
   const handleSearch = async (query: string) => {
     setLoading(true)
     try {
-      // Replace with your backend API endpoint
       const response = await fetch('/api/research', {
         method: 'POST',
         headers: {
@@ -31,26 +30,7 @@ export default function Home() {
       setResults(data)
     } catch (error) {
       console.error('Search error:', error)
-      // Mock data for demo
-      setResults({
-        query,
-        marketAnalysis: {
-          summary: "Based on current market trends, this product shows strong potential in the competitive landscape.",
-          trends: ["High demand for premium features", "Growing market segment", "Competitive pricing advantage"],
-          competition: "Moderate competition with 3-4 major players",
-          marketSize: "$2.5B globally"
-        },
-        purchaseLikelihood: {
-          score: 78,
-          factors: ["Competitive pricing", "Strong feature set", "Positive reviews"],
-          recommendation: "High likelihood of purchase success"
-        },
-        sources: [
-          { title: "Market Research Report", url: "#", type: "report" },
-          { title: "Consumer Reviews Analysis", url: "#", type: "reviews" },
-          { title: "Competitor Analysis", url: "#", type: "analysis" }
-        ]
-      })
+      alert('Failed to connect to backend. Please check if the server is running.')
     } finally {
       setLoading(false)
     }
