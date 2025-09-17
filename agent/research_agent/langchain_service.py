@@ -93,7 +93,7 @@ class LangChainService:
             return "=== YOUTUBE REVIEW ANALYSIS ===\nFailed to process YouTube review data"
     
     def create_comprehensive_context(self, search_results: List[Dict], scraped_data: List[Dict], 
-                                   youtube_reviews: List[Dict], ecommerce_data: Dict = None) -> str:
+                                   youtube_reviews: List[Dict], ecommerce_data: Dict = None, competitors: List[Dict] = None) -> str:
         """Create comprehensive context using all data sources with enhanced processing"""
         
         context = "=== COMPREHENSIVE PRODUCT REVIEW DATA ===\n\n"
@@ -103,7 +103,8 @@ class LangChainService:
         context += f"- Web Reviews: {len(scraped_data)} sites scraped\n"
         context += f"- YouTube Reviews: {len(youtube_reviews)} videos analyzed\n"
         context += f"- E-commerce Data: {'Available' if ecommerce_data else 'Not available'}\n"
-        context += f"- Search Results: {len(search_results)} results processed\n\n"
+        context += f"- Search Results: {len(search_results)} results processed\n"
+        context += f"- Competitors Found: {len(competitors) if competitors else 0}\n\n"
         
         # Add e-commerce data if available
         if ecommerce_data:
@@ -151,6 +152,13 @@ class LangChainService:
             context += f"\n{youtube_content}\n"
         else:
             context += "\n=== YOUTUBE REVIEWS ===\nNo YouTube reviews processed\n\n"
+        
+        # Add competitor analysis if available
+        if competitors:
+            context += "\n=== COMPETITOR ANALYSIS ===\n"
+            for i, comp in enumerate(competitors, 1):
+                context += f"{i}. {comp['name']} ({comp['category']})\n"
+                context += f"   Comparison: {comp['comparison_url']}\n\n"
         
         # Add search result summaries with enhanced metadata
         context += "\n=== SEARCH RESULT SUMMARIES ===\n"

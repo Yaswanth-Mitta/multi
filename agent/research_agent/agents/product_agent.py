@@ -2,7 +2,7 @@ from typing import Dict, Any
 from ..interfaces import Agent
 from ..search_service import SearchService
 from ..llm_service import LLMService
-from ..scraper_service import ScraperService
+from ..enhanced_scraper_service import EnhancedScraperService
 from ..youtube_service import YouTubeService
 from ..enhanced_ecommerce_service import EnhancedEcommerceService
 from ..langchain_service import LangChainService
@@ -12,7 +12,7 @@ class ProductAgent(Agent):
     def __init__(self, search_service: SearchService, llm_service: LLMService, serp_api_key: str = None):
         self.search_service = search_service
         self.llm_service = llm_service
-        self.scraper = ScraperService()
+        self.scraper = EnhancedScraperService(serp_api_key)
         self.youtube = YouTubeService(serp_api_key)
         self.ecommerce = EnhancedEcommerceService(serp_api_key)
         self.langchain = LangChainService()
@@ -70,10 +70,13 @@ class ProductAgent(Agent):
                 print(f"Availability: {data.get('availability', 'N/A')}")
         print(f"\n=== END E-COMMERCE DATA ===")
         
-        # Scrape actual content from URLs
-        print("\nScraping content from search results...")
-        urls = [result['link'] for result in search_results if result.get('link')]
-        scraped_data = self.scraper.scrape_content(urls)
+        # Scrape content from SERP API results
+        print("\nScraping content from SERP API results...")
+        scraped_data = self.scraper.scrape_serp_results(query, max_results=5)
+        
+        # Find competitors using SERP API
+        print("\nFinding competitors...")
+        competitors = self.scraper.find_competitors(query)
         
         # Print scraped data
         print(f"\n=== SCRAPED CONTENT ===")
@@ -87,7 +90,7 @@ class ProductAgent(Agent):
         # Use LangChain to process and structure all data
         print("\nProcessing data with LangChain...")
         search_context = self.langchain.create_comprehensive_context(
-            search_results, scraped_data, youtube_reviews, ecommerce_data
+            search_results, scraped_data, youtube_reviews, ecommerce_data, competitors
         )
         
         market_analysis_prompt = f"""
@@ -165,26 +168,28 @@ class ProductAgent(Agent):
             memory.start_new_session(product_name, research_data)
         
         return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                        PRODUCT MARKET ANALYSIS                               ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+## 📊 COMPREHENSIVE PRODUCT ANALYSIS
 
-📋 QUERY: {query}
-🏷️  CATEGORY: PRODUCT
+**Query:** {query}  
+**Category:** PRODUCT
 
-📊 MARKET ANALYSIS:
+### 📈 Market Analysis
 {market_analysis}
 
-🎯 PURCHASE ASSESSMENT:
+### 🎯 Purchase Assessment
 {purchase_analysis}
 
-💬 CONVERSATIONAL MODE ACTIVATED
-→ Ask follow-up questions about this product (colors, price, specs, etc.)
-→ Type 'exit' to start fresh research
+### 💬 Interactive Mode
+✅ **Conversational mode activated** - Ask follow-up questions about:
+- Product specifications and features
+- Pricing and availability
+- Comparisons with competitors
+- User reviews and ratings
 
-═══════════════════════════════════════════════════════════════════════════════
-Product Analysis + Conversational Mode | Search Data + AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
+*Type 'exit' to start fresh research*
+
+---
+*Data Sources: SERP API • YouTube Reviews • E-commerce Data • AWS Bedrock AI*
         """.strip()
     
     def get_agent_type(self) -> str:

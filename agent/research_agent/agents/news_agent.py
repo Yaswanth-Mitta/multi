@@ -59,22 +59,19 @@ class NewsAgent(Agent):
         analysis = self.llm_service.query_llm(analysis_prompt)
         
         return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                        COMPREHENSIVE NEWS ANALYSIS                          ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+## 📰 COMPREHENSIVE NEWS ANALYSIS
 
-📋 QUERY: {query}
-🏷️  CATEGORY: {category}
+**Query:** {query}  
+**Category:** {category}
 
-📰 LATEST NEWS COVERAGE:
+### 📅 Latest News Coverage
 {news_context}
 
-📊 ANALYSIS & INSIGHTS:
+### 📊 Analysis & Insights
 {analysis}
 
-═══════════════════════════════════════════════════════════════════════════════
-Real-time News Analysis | NewsData.io + AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
+---
+*Data Sources: NewsData.io • AWS Bedrock AI*
         """.strip()
     
     def _handle_stock_query(self, query: str) -> str:
@@ -99,35 +96,26 @@ Real-time News Analysis | NewsData.io + AWS Bedrock
             if data:
                 company_names.append(data['name'])
                 stock_data_context += f"""
-┌─────────────────────────────────────────────────────────────┐
-│  {data['name']} ({data['symbol']})                          
-└─────────────────────────────────────────────────────────────┘
+**{data['name']} ({data['symbol']})**
 
-💰 CURRENT TRADING SESSION:
-   ├─ Current Price: ${data['current_price']}
-   ├─ Change: ${data['change']} ({data['change_percent']:+.2f}%)
-   ├─ Today's Open: ${data['today_open']}
-   ├─ Day Range: ${data['today_low']} - ${data['today_high']}
-   └─ Volume: {data['today_volume']:,}
+**Current Trading:**
+- Price: ${data['current_price']}
+- Change: ${data['change']} ({data['change_percent']:+.2f}%)
+- Day Range: ${data['today_low']} - ${data['today_high']}
+- Volume: {data['today_volume']:,}
 
-📈 PREVIOUS SESSION:
-   ├─ Yesterday Open: ${data['yesterday_open']}
-   ├─ Yesterday Close: ${data['yesterday_close']}
-   ├─ Yesterday Range: ${data['yesterday_low']} - ${data['yesterday_high']}
-   └─ Yesterday Volume: {data['yesterday_volume']:,}
-
-📊 KEY METRICS:
-   ├─ Market Cap: ${data['market_cap']:,}
-   ├─ P/E Ratio: {data['pe_ratio']}
-   └─ 52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
+**Key Metrics:**
+- Market Cap: ${data['market_cap']:,}
+- P/E Ratio: {data['pe_ratio']}
+- 52-Week Range: ${data['52_week_low']} - ${data['52_week_high']}
 
 """
         
         # Step 3: Get market summary
         market_summary = self.stock_service.get_market_summary()
-        market_context = "\nMarket Indices:\n"
+        market_context = "**Market Overview:**\n"
         for index, data in market_summary.items():
-            market_context += f"{index}: ${data['price']} ({data['change_percent']:+.2f}%)\n"
+            market_context += f"- {index}: ${data['price']} ({data['change_percent']:+.2f}%)\n"
         
         # Step 4: Get related news for the company
         print("Fetching company news...")
@@ -168,25 +156,24 @@ Real-time News Analysis | NewsData.io + AWS Bedrock
         analysis = self.llm_service.query_llm(analysis_prompt)
         
         return f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                     COMPREHENSIVE STOCK ANALYSIS                            ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+## 📈 COMPREHENSIVE STOCK ANALYSIS
 
-📋 QUERY: {query}
+**Query:** {query}
 
-📊 REAL-TIME STOCK DATA:
+### 📊 Real-Time Market Data
 {stock_data_context}
+
+### 🌍 Market Overview
 {market_context}
 
-📰 RECENT NEWS & DEVELOPMENTS:
+### 📰 Latest News & Developments
 {news_context}
 
-📈 COMPREHENSIVE ANALYSIS:
+### 🎯 Investment Analysis
 {analysis}
 
-═══════════════════════════════════════════════════════════════════════════════
-Real-time Stock Data + News Analysis | Yahoo Finance + NewsData.io + AWS Bedrock
-═══════════════════════════════════════════════════════════════════════════════
+---
+*Data Sources: Yahoo Finance • NewsData.io • AWS Bedrock AI*
         """.strip()
     
     def get_agent_type(self) -> str:
