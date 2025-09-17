@@ -24,8 +24,18 @@ REM Activate virtual environment and install dependencies
 call venv\Scripts\activate.bat
 pip install -r requirements.txt
 
+REM Test imports before starting server
+echo 🧪 Testing imports...
+python3 test_imports.py 2>nul || python test_imports.py
+if errorlevel 1 (
+    echo ❌ Import test failed. Please check dependencies.
+    pause
+    exit /b 1
+)
+
 REM Start backend in new window
-start "Backend Server" cmd /k "venv\Scripts\activate.bat && python3 server.py 2>nul || python server.py"
+echo 🚀 Starting backend server...
+start "Backend Server" cmd /k "venv\Scripts\activate.bat && (python3 server.py 2>nul || python server.py)"
 
 cd ..
 

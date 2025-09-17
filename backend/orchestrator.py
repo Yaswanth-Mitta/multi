@@ -1,9 +1,13 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from typing import Dict, Any
 from factory import AgentFactory
 from services.news_service import NewsService
 from services.search_service import SearchService
 from services.llm_service import LLMService
-from memory_service import MemoryService
+from services.memory_service import MemoryService
 
 class AIOrchestrator:
     def __init__(self, newsdata_api_key: str, google_cse_id: str = None, serp_api_key: str = None, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
@@ -80,10 +84,9 @@ class AIOrchestrator:
                 print(f"🔄 Detected follow-up question about {self.memory.current_session['product']}")
                 return self._handle_followup_query(user_query)
             
-            # Clear memory if starting new research
-            if self.memory.has_active_session():
-                print(f"🔄 Starting new research, clearing previous session")
-                self.memory.clear_session()
+            # Always clear memory for new research to prevent cached responses
+            print(f"🔄 Starting new research, clearing any previous session")
+            self.memory.clear_session()
             
             # Step 1: Classify the query for new research
             category = self.classify_query(user_query)
@@ -113,13 +116,18 @@ class AIOrchestrator:
         
         # Keywords that clearly indicate follow-up questions
         followup_keywords = [
-            'camera', 'battery', 'price', 'color', 'colors', 'screen', 'display', 
+            'camera', 'battery', 'color', 'colors', 'screen', 'display', 
             'performance', 'storage', 'memory', 'size', 'weight', 'features',
             'what', 'how', 'when', 'where', 'why', 'is it', 'does it', 'can it',
             'details', 'detail', 'about', 'specs', 'specification', 'tell me',
             'more about', 'explain', 'describe', 'show me', 'good', 'bad',
             'pros', 'cons', 'worth', 'buy', 'purchase', 'recommend'
         ]
+        
+        # Stock/financial queries should always be new research
+        stock_keywords = ['stock', 'market', 'trading', 'investment', 'share', 'price', 'analysis', 'financial']
+        if any(keyword in query_lower for keyword in stock_keywords):
+            return True
         
         # Short queries are likely follow-ups
         if len(query.split()) <= 3:
@@ -189,6 +197,7 @@ class AIOrchestrator:
     def clear_memory(self):
         """Clear conversation memory"""
         self.memory.clear_session()
+        print("🔄 Memory cleared")
     
     def __del__(self):
         """Cleanup when orchestrator is destroyed"""

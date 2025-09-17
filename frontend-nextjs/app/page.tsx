@@ -61,6 +61,13 @@ export default function Home() {
             onRefresh={async () => {
               setLoading(true)
               setResults(null)
+              setQuery('')
+              // Clear any cached data
+              if (typeof window !== 'undefined') {
+                sessionStorage.clear()
+                localStorage.removeItem('lastQuery')
+                localStorage.removeItem('lastResults')
+              }
               await new Promise(resolve => setTimeout(resolve, 100))
               setLoading(false)
               window.scrollTo({ top: 0, behavior: 'smooth' })
