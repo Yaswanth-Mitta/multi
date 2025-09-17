@@ -1,4 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
+
+function getPublicIP() {
+  try {
+    const envPath = path.join(process.cwd(), '..', '.env')
+    const envContent = fs.readFileSync(envPath, 'utf8')
+    const match = envContent.match(/PUBLIC_IP=(.+)/)
+    return match ? match[1].trim() : 'localhost'
+  } catch {
+    return 'localhost'
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +24,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
+    const publicIP = getPublicIP()
+    const backendUrl = `http://${publicIP}:8000`
     
     const response = await fetch(`${backendUrl}/research`, {
       method: 'POST',
