@@ -7,10 +7,10 @@ function getBackendURL() {
     const envPath = path.join(process.cwd(), '..', '.env')
     const envContent = fs.readFileSync(envPath, 'utf8')
     const match = envContent.match(/PUBLIC_IP=(.+)/)
-    const ip = match ? match[1].trim() : 'localhost'
+    const ip = match ? match[1].trim() : process.env.PUBLIC_IP || 'localhost'
     return `http://${ip}:8000`
   } catch {
-    return 'http://localhost:8000'
+    return `http://${process.env.PUBLIC_IP || 'localhost'}:8000`
   }
 }
 

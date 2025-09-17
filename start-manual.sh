@@ -36,10 +36,16 @@ FRONTEND_PID=$!
 
 cd ..
 
+# Get PUBLIC_IP from .env
+PUBLIC_IP=$(grep PUBLIC_IP .env | cut -d '=' -f2)
+if [ -z "$PUBLIC_IP" ]; then
+    PUBLIC_IP="localhost"
+fi
+
 echo "✅ Services started!"
 echo "📋 Access URLs:"
-echo "Frontend: http://localhost:3000"
-echo "Backend:  http://localhost:8000"
+echo "Frontend: http://$PUBLIC_IP:3000"
+echo "Backend:  http://$PUBLIC_IP:8000"
 echo ""
 echo "Press Ctrl+C to stop all services"
 

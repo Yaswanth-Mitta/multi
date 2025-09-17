@@ -10,12 +10,12 @@
 # Copy environment template
 cp .env.example .env
 
-# Edit .env file with your API keys
+# Edit .env file with your API keys and EC2 IP
 SERP_API_KEY=your_serp_api_key_here
 NEWSDATA_API_KEY=your_newsdata_api_key_here
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
-PUBLIC_IP=localhost
+PUBLIC_IP=your_ec2_public_ip_here
 ```
 
 ## Step 2: Backend Setup
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 python server.py
 ```
 
-Backend will run on: http://localhost:8000
+Backend will run on: http://your_ec2_ip:8000
 
 ## Step 3: Frontend Setup (New Terminal)
 ```bash
@@ -53,11 +53,13 @@ npm install
 npm run dev
 ```
 
-Frontend will run on: http://localhost:3000
+Frontend will run on: http://your_ec2_ip:3000
 
 ## Step 4: Access Application
-- Open browser: http://localhost:3000
-- Backend API: http://localhost:8000
+- Open browser: http://your_ec2_ip:3000
+- Backend API: http://your_ec2_ip:8000
+
+**Note**: Replace `your_ec2_ip` with the actual EC2 public IP from your .env file
 
 ## Production Build (Optional)
 ```bash
@@ -75,7 +77,7 @@ npm start
 python --version
 
 # Test backend directly
-curl http://localhost:8000/
+curl http://your_ec2_ip:8000/
 
 # Check dependencies
 pip list

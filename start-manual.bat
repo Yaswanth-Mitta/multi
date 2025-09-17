@@ -39,10 +39,14 @@ start "Frontend Server" cmd /k "npm run dev"
 
 cd ..
 
+REM Get PUBLIC_IP from .env
+for /f "tokens=2 delims==" %%i in ('findstr PUBLIC_IP .env 2^>nul') do set PUBLIC_IP=%%i
+if "%PUBLIC_IP%"=="" set PUBLIC_IP=localhost
+
 echo ✅ Services started!
 echo 📋 Access URLs:
-echo Frontend: http://localhost:3000
-echo Backend:  http://localhost:8000
+echo Frontend: http://%PUBLIC_IP%:3000
+echo Backend:  http://%PUBLIC_IP%:8000
 echo.
 echo Both services are running in separate windows.
 echo Close the windows to stop the services.
