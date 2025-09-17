@@ -12,6 +12,7 @@ cp .env.example .env
 
 # Edit .env file with your API keys and EC2 IP
 SERP_API_KEY=your_serp_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
 NEWSDATA_API_KEY=your_newsdata_api_key_here
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
@@ -24,7 +25,9 @@ PUBLIC_IP=your_ec2_public_ip_here
 cd backend
 
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv  # Linux/Mac
+# or
+python -m venv venv   # Windows
 
 # Activate virtual environment
 # Windows:
@@ -36,7 +39,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Start backend server
-python server.py
+python3 server.py  # Linux/Mac
+# or
+python server.py   # Windows
 ```
 
 Backend will run on: http://your_ec2_ip:8000
@@ -74,7 +79,7 @@ npm start
 ### Backend Issues
 ```bash
 # Check Python version
-python --version
+python3 --version
 
 # Test backend directly
 curl http://your_ec2_ip:8000/

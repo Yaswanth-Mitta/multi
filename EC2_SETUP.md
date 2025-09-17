@@ -34,6 +34,7 @@ nano .env  # Edit with your API keys and EC2 IP
 ```env
 # Replace with your actual values
 SERP_API_KEY=your_serp_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
 NEWSDATA_API_KEY=your_newsdata_api_key_here
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
@@ -59,7 +60,7 @@ cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python server.py
+python3 server.py
 
 # Terminal 2 - Frontend
 cd frontend-nextjs
@@ -87,7 +88,7 @@ npm start -- --hostname 0.0.0.0 --port 3000
 # Backend production
 cd backend
 source venv/bin/activate
-python server.py
+python3 server.py
 ```
 
 ## Process Management (Optional)
@@ -98,7 +99,7 @@ sudo npm install -g pm2
 # Start backend with PM2
 cd backend
 source venv/bin/activate
-pm2 start server.py --name "ai-research-backend" --interpreter python
+pm2 start server.py --name "ai-research-backend" --interpreter python3
 
 # Start frontend with PM2
 cd frontend-nextjs

@@ -17,7 +17,7 @@ cd backend
 REM Check if virtual environment exists
 if not exist "venv" (
     echo 📦 Creating virtual environment...
-    python -m venv venv
+    python3 -m venv venv 2>nul || python -m venv venv
 )
 
 REM Activate virtual environment and install dependencies
@@ -25,7 +25,7 @@ call venv\Scripts\activate.bat
 pip install -r requirements.txt
 
 REM Start backend in new window
-start "Backend Server" cmd /k "venv\Scripts\activate.bat && python server.py"
+start "Backend Server" cmd /k "venv\Scripts\activate.bat && python3 server.py 2>nul || python server.py"
 
 cd ..
 

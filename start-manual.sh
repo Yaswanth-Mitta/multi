@@ -16,13 +16,13 @@ cd backend
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "📦 Creating virtual environment..."
-    python -m venv venv
+    python3 -m venv venv
 fi
 
 # Activate virtual environment and start backend
 source venv/bin/activate
 pip install -r requirements.txt
-python server.py &
+python3 server.py &
 BACKEND_PID=$!
 
 cd ..
