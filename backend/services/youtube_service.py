@@ -1,7 +1,7 @@
 import os
 import random
 from typing import List, Dict, Any
-from serp_service import SerpService
+from .serp_service import SerpService
 
 try:
     from youtube_transcript_api import YouTubeTranscriptApi

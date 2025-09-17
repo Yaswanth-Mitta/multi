@@ -2,8 +2,8 @@ import requests
 import urllib.parse
 import os
 from typing import Dict, List, Any
-from enhanced_search_service import EnhancedSearchService
-from serp_service import SerpService
+from .enhanced_search_service import EnhancedSearchService
+from .serp_service import SerpService
 
 try:
     from tavily import TavilyClient

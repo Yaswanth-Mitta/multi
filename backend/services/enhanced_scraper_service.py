@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from typing import List, Dict, Any
 import time
 import random
-from serp_service import SerpService
+from .serp_service import SerpService
 
 class EnhancedScraperService:
     def __init__(self, serp_api_key: str = None):

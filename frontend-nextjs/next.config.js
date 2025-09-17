@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    allowedDevOrigins: ['13.220.186.164']
-  },
+
   env: {
-    PUBLIC_IP: process.env.PUBLIC_IP,
-    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL
+    PUBLIC_IP: process.env.PUBLIC_IP || 'localhost',
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
   },
   async rewrites() {
     return [

@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 import re
 import time
 import random
-from serp_service import SerpService
+from .serp_service import SerpService
 
 class EnhancedEcommerceService:
     def __init__(self, serp_api_key: str = None):
