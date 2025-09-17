@@ -23,6 +23,10 @@ class Config:
         return os.getenv('NEWSDATA_API_KEY')
     
     @staticmethod
+    def get_serp_api_key() -> Optional[str]:
+        return os.getenv('SERP_API_KEY')
+    
+    @staticmethod
     def validate_config() -> bool:
         """Validate that all required configuration is present"""
         newsdata_key = Config.get_newsdata_api_key()
@@ -35,6 +39,11 @@ class Config:
         # Google API is optional (enhanced search service provides fallback)
         if not google_cse_id:
             print("Info: GOOGLE_CSE_ID not set (using enhanced search fallback)")
+        
+        # SERP API is optional but recommended for best results
+        serp_key = Config.get_serp_api_key()
+        if not serp_key:
+            print("Info: SERP_API_KEY not set (using fallback search methods)")
         
         # Always return True - system works without external APIs
         return True

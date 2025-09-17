@@ -9,10 +9,11 @@ from .search_service import SearchService
 from .llm_service import LLMService
 
 class AgentFactory:
-    def __init__(self, news_service: NewsService, search_service: SearchService, llm_service: LLMService):
+    def __init__(self, news_service: NewsService, search_service: SearchService, llm_service: LLMService, serp_api_key: str = None):
         self.news_service = news_service
         self.search_service = search_service
         self.llm_service = llm_service
+        self.serp_api_key = serp_api_key
         self._agents: Dict[str, Agent] = {}
     
     def get_agent(self, agent_type: str) -> Agent:
@@ -26,7 +27,7 @@ class AgentFactory:
         if agent_type in ["NEWS", "STOCKS"]:
             return NewsAgent(self.news_service, self.llm_service)
         elif agent_type == "PRODUCT":
-            return ProductAgent(self.search_service, self.llm_service)
+            return ProductAgent(self.search_service, self.llm_service, self.serp_api_key)
         elif agent_type == "GENERAL":
             return GeneralAgent(self.llm_service)
         elif agent_type == "VALIDATOR":

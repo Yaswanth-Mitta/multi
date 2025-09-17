@@ -4,18 +4,19 @@ from ..search_service import SearchService
 from ..llm_service import LLMService
 from ..scraper_service import ScraperService
 from ..youtube_service import YouTubeService
-from ..ecommerce_service import EcommerceService
+from ..enhanced_ecommerce_service import EnhancedEcommerceService
 from ..langchain_service import LangChainService
 import time
 
 class ProductAgent(Agent):
-    def __init__(self, search_service: SearchService, llm_service: LLMService):
+    def __init__(self, search_service: SearchService, llm_service: LLMService, serp_api_key: str = None):
         self.search_service = search_service
         self.llm_service = llm_service
         self.scraper = ScraperService()
-        self.youtube = YouTubeService()
-        self.ecommerce = EcommerceService()
+        self.youtube = YouTubeService(serp_api_key)
+        self.ecommerce = EnhancedEcommerceService(serp_api_key)
         self.langchain = LangChainService()
+        print("✅ ProductAgent initialized with enhanced SERP-powered services")
     
     def process(self, query: str, context: Dict[str, Any] = None) -> str:
         # Get product search data

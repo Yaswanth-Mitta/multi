@@ -25,27 +25,55 @@ class NewsAgent(Agent):
     
     def _handle_news_query(self, query: str, category: str) -> str:
         """Handle regular news queries"""
-        # COMMENTED OUT - PAID SERVICE
-        # news_results = self.news_service.search_news(query)
-        # if not news_results:
-        #     return "No real-time data found for the query."
+        news_results = self.news_service.search_news(query)
+        if not news_results:
+            return "No real-time news data found for the query."
         
-        news_context = f"News service disabled (NewsData.io is paid). Query was: {query}"
+        # Create news context from results
+        news_context = "\n=== LATEST NEWS ARTICLES ===\n"
+        for i, article in enumerate(news_results, 1):
+            news_context += f"\n{i}. {article['title']}\n"
+            news_context += f"   Source: {article['source_id']}\n"
+            news_context += f"   Published: {article['pubDate']}\n"
+            news_context += f"   Summary: {article['description']}\n"
+            if article['content']:
+                news_context += f"   Content: {article['content'][:300]}...\n"
+            news_context += f"   URL: {article['link']}\n"
+        
+        # Analyze news with LLM
+        analysis_prompt = f"""
+        Analyze the following news articles about "{query}" and provide comprehensive insights:
+        
+        {news_context}
+        
+        Provide:
+        1. Key Developments Summary
+        2. Impact Analysis
+        3. Trend Identification
+        4. Future Implications
+        5. Stakeholder Effects
+        
+        Focus on factual analysis based on the provided news content.
+        """
+        
+        analysis = self.llm_service.query_llm(analysis_prompt)
         
         return f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                        NEWS SERVICE DISABLED                                ║
+║                        COMPREHENSIVE NEWS ANALYSIS                          ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 📋 QUERY: {query}
 🏷️  CATEGORY: {category}
 
-📰 NEWS SERVICE STATUS:
-NewsData.io service is disabled (paid service)
-For stock queries, use stock-specific commands instead.
+📰 LATEST NEWS COVERAGE:
+{news_context}
+
+📊 ANALYSIS & INSIGHTS:
+{analysis}
 
 ═══════════════════════════════════════════════════════════════════════════════
-News Service Disabled | Use Stock Analysis Instead
+Real-time News Analysis | NewsData.io + AWS Bedrock
 ═══════════════════════════════════════════════════════════════════════════════
         """.strip()
     
@@ -101,9 +129,18 @@ News Service Disabled | Use Stock Analysis Instead
         for index, data in market_summary.items():
             market_context += f"{index}: ${data['price']} ({data['change_percent']:+.2f}%)\n"
         
-        # Step 4: Get related news for the company (COMMENTED OUT - PAID SERVICE)
-        print("Skipping news fetch (paid service)...")
-        news_context = "\n📰 News Analysis: Skipped (NewsData.io is a paid service)\n"
+        # Step 4: Get related news for the company
+        print("Fetching company news...")
+        company_query = " OR ".join(company_names) if company_names else query
+        news_results = self.news_service.search_news(company_query, size=3)
+        
+        news_context = "\n📰 RECENT NEWS & DEVELOPMENTS:\n"
+        if news_results:
+            for article in news_results:
+                news_context += f"• {article['title']} ({article['source_id']})\n"
+                news_context += f"  {article['description']}\n\n"
+        else:
+            news_context += "No recent news found for the queried companies.\n"
         
         # Step 5: Combine all data and send to LLM
         print("Analyzing with LLM...")

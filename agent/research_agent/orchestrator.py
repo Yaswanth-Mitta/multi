@@ -6,14 +6,14 @@ from .llm_service import LLMService
 from .memory_service import MemoryService
 
 class AIOrchestrator:
-    def __init__(self, newsdata_api_key: str, google_cse_id: str, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
-        # Initialize services
+    def __init__(self, newsdata_api_key: str, google_cse_id: str = None, serp_api_key: str = None, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = 'us-east-1'):
+        # Initialize services with SERP API support
         news_service = NewsService(newsdata_api_key)
-        search_service = SearchService(google_cse_id)
+        search_service = SearchService(google_cse_id, serp_api_key)
         llm_service = LLMService(aws_access_key, aws_secret_key, aws_region)
         
         # Initialize factory with services
-        self.factory = AgentFactory(news_service, search_service, llm_service)
+        self.factory = AgentFactory(news_service, search_service, llm_service, serp_api_key)
         self.llm_service = llm_service
         self.memory = MemoryService()
     

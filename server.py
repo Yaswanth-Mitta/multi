@@ -22,6 +22,7 @@ def init_orchestrator():
         orchestrator = AIOrchestrator(
             newsdata_api_key=Config.get_newsdata_api_key(),
             google_cse_id=Config.get_google_cse_id(),
+            serp_api_key=Config.get_serp_api_key(),
             aws_access_key=Config.get_aws_access_key(),
             aws_secret_key=Config.get_aws_secret_key(),
             aws_region=Config.get_aws_region()
