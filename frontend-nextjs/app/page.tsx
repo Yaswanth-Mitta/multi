@@ -23,14 +23,16 @@ export default function Home() {
       })
       
       if (!response.ok) {
-        throw new Error('Failed to fetch results')
+        const errorText = await response.text()
+        throw new Error(`Server error: ${response.status} - ${errorText}`)
       }
       
       const data = await response.json()
       setResults(data)
     } catch (error) {
       console.error('Search error:', error)
-      alert('Failed to connect to backend. Please check if the server is running.')
+      setResults(null)
+      alert('Failed to connect to backend. Please check if the server is running and try again.')
     } finally {
       setLoading(false)
     }
@@ -59,6 +61,8 @@ export default function Home() {
             onRefresh={() => {
               setResults(null)
               setLoading(false)
+              // Force re-render by clearing any cached state
+              window.scrollTo({ top: 0, behavior: 'smooth' })
             }} 
           />
         )}

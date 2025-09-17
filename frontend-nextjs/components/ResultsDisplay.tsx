@@ -123,51 +123,81 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
   const processedContent = parseASCIIContent(results.marketAnalysis.summary)
   
   const handleRefresh = () => {
-    if (onRefresh) {
-      onRefresh()
-    } else {
+    try {
+      if (onRefresh) {
+        onRefresh()
+      } else {
+        // Fallback to page reload if onRefresh is not provided
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Refresh error:', error)
+      // Force page reload as last resort
       window.location.reload()
     }
   }
   
   const handleDownloadPDF = async () => {
-    if (!contentRef.current) return
+    if (!contentRef.current) {
+      alert('Content not ready for PDF generation. Please try again.')
+      return
+    }
+    
+    // Show loading state
+    const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement
+    if (button) {
+      button.disabled = true
+      button.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...'
+    }
     
     try {
       const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: contentRef.current.scrollWidth,
+        height: contentRef.current.scrollHeight
       })
       
-      const imgData = canvas.toDataURL('image/png')
+      const imgData = canvas.toDataURL('image/png', 0.8)
       const pdf = new jsPDF('p', 'mm', 'a4')
       
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
       const imgWidth = canvas.width
       const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 60) / imgHeight)
       const imgX = (pdfWidth - imgWidth * ratio) / 2
       const imgY = 30
       
       // Add header
-      pdf.setFontSize(20)
+      pdf.setFontSize(18)
       pdf.setTextColor(59, 130, 246)
       pdf.text('AI Research Analysis Report', 20, 20)
       
+      // Add content
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio)
       
       // Add footer
-      pdf.setFontSize(10)
+      pdf.setFontSize(8)
       pdf.setTextColor(100, 100, 100)
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, 20, pdfHeight - 10)
+      pdf.text(`Generated on ${new Date().toLocaleDateString()} | Query: ${results.query}`, 20, pdfHeight - 10)
       
-      pdf.save(`research-analysis-${results.query.replace(/\s+/g, '-').toLowerCase()}.pdf`)
+      // Clean filename
+      const filename = `research-analysis-${results.query.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().substring(0, 50)}.pdf`
+      pdf.save(filename)
+      
     } catch (error) {
       console.error('Error generating PDF:', error)
-      alert('Error generating PDF. Please try again.')
+      alert('Error generating PDF. Please check your browser settings and try again.')
+    } finally {
+      // Reset button state
+      if (button) {
+        button.disabled = false
+        button.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span>Download PDF</span>'
+      }
     }
   }
   
@@ -192,7 +222,8 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+              data-pdf-button
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
