@@ -122,17 +122,15 @@ export default function ResultsDisplay({ results, onRefresh }: ResultsProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const processedContent = parseASCIIContent(results.marketAnalysis.summary)
   
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     try {
       if (onRefresh) {
-        onRefresh()
+        await onRefresh()
       } else {
-        // Fallback to page reload if onRefresh is not provided
         window.location.reload()
       }
     } catch (error) {
       console.error('Refresh error:', error)
-      // Force page reload as last resort
       window.location.reload()
     }
   }

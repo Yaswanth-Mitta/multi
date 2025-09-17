@@ -1,0 +1,28 @@
+#!/bin/bash
+
+echo "🚀 Deploying AI Research Agent to Kubernetes"
+echo "============================================="
+
+# Apply namespace
+kubectl apply -f namespace.yaml
+
+# Apply ConfigMap and Secrets
+kubectl apply -f configmap.yaml
+
+# Apply backend
+kubectl apply -f backend-deployment.yaml
+kubectl apply -f backend-service.yaml
+
+# Apply frontend
+kubectl apply -f frontend-deployment.yaml
+kubectl apply -f frontend-service.yaml
+
+echo "✅ Deployment complete!"
+echo ""
+echo "📋 Access URLs:"
+echo "Frontend: http://<node-ip>:30300"
+echo "Backend:  http://<node-ip>:30800"
+echo ""
+echo "🔍 Check status:"
+echo "kubectl get pods -n ai-research-agent"
+echo "kubectl get services -n ai-research-agent"

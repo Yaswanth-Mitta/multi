@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-research-backend
+  namespace: ai-research-agent
+  labels:
+    app: ai-research-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-research-backend
+  template:
+    metadata:
+      labels:
+        app: ai-research-backend
+    spec:
+      containers:
+      - name: backend
+        image: ai-research-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: ai-research-config
+              key: AWS_REGION
+        - name: PUBLIC_IP
+          valueFrom:
+            configMapKeyRef:
+              name: ai-research-config
+              key: PUBLIC_IP
+        - name: SERP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: SERP_API_KEY
+        - name: NEWSDATA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: NEWSDATA_API_KEY
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: TAVILY_API_KEY
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: GOOGLE_API_KEY
+        - name: GOOGLE_CSE_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-research-secrets
+              key: GOOGLE_CSE_ID
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5

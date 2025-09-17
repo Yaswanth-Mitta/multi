@@ -58,10 +58,11 @@ export default function Home() {
         {results && (
           <ResultsDisplay 
             results={results} 
-            onRefresh={() => {
+            onRefresh={async () => {
+              setLoading(true)
               setResults(null)
+              await new Promise(resolve => setTimeout(resolve, 100))
               setLoading(false)
-              // Force re-render by clearing any cached state
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }} 
           />

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-research-frontend
+  namespace: ai-research-agent
+  labels:
+    app: ai-research-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-research-frontend
+  template:
+    metadata:
+      labels:
+        app: ai-research-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ai-research-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_BACKEND_URL
+          value: "http://localhost:30800"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
